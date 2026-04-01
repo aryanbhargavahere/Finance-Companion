@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -11,13 +12,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,72 +40,41 @@ import com.example.financecompanion.dataModel.model.VaultState
 @Composable
 fun InsightsScreen(state: VaultState) {
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8FAFC))
-            .padding(horizontal = 20.dp)
+        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        contentPadding = PaddingValues(bottom = 24.dp)
     ) {
         item {
-            Spacer(modifier = Modifier.height(24.dp))
             Text(
-                "Financial Insights",
+                "Financial Analysis",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black,
-                color = Color(0xFF0A2540)
+                modifier = Modifier.padding(vertical = 24.dp)
             )
-            Text("Understand your spending patterns", color = Color.Gray, fontSize = 14.sp)
-            Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Visual Element: Spending Progress or Comparison
+        // 1. Spending Chart (Visual Representation)
+        item { SpendingChartCard() }
+
+        // 2. Weekly Trend (Requirement: Trend Indicator)
+        item { WeeklyTrendCard() }
+
+        // 3. Progress Indicator (Requirement: Savings Goal)
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                Column(Modifier.padding(20.dp)) {
-                    Text("Weekly Spending", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    // A simple Bar Chart placeholder using colored Boxes
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(100.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        Bar(0.4f, "Mon")
-                        Bar(0.7f, "Tue")
-                        Bar(0.3f, "Wed")
-                        Bar(0.9f, "Thu") // Peak spending
-                        Bar(0.5f, "Fri")
-                    }
-                }
-            }
+            SavingsGoalCard(current = 1200.0, target = 2000.0)
+            Spacer(modifier = Modifier.height(20.dp))
         }
 
-        item { Spacer(modifier = Modifier.height(24.dp)) }
-
-        // Category Breakdown List
-        item { Text("TOP CATEGORIES", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Black) }
+        // 4. Category Breakdown (Requirement: Spending by Category)
+        item { Text("CATEGORY BREAKDOWN", fontWeight = FontWeight.Bold, color = Color.Gray) }
 
         val categories = state.recentEntries.filter { !it.isIncome }.groupBy { it.category }
         items(categories.toList()) { (category, list) ->
-            val total = list.sumOf { it.amount }
-            CategoryInsightRow(category, total, state.totalExpenses)
+            CategoryInsightRow(
+                category = category,
+                categoryAmount = list.sumOf { it.amount },
+                totalExpenses = state.totalExpenses
+            )
         }
-    }
-}
-
-@Composable
-fun Bar(fraction: Float, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .width(20.dp)
-                .fillMaxHeight(fraction)
-                .background(Color(0xFF00796B), RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-        )
-        Text(label, fontSize = 10.sp, color = Color.Gray)
     }
 }
 @Composable
@@ -169,6 +144,69 @@ fun CategoryInsightRow(
                             if (percentage > 0.5f) Color(0xFFD32F2F) else Color(0xFF00796B),
                             CircleShape
                         )
+                )
+            }
+        }
+    }
+}
+@Composable
+fun SpendingChartCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(Modifier.padding(20.dp)) {
+            Text("Spending Activity", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Simplified Line Chart Placeholder
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .background(Color(0xFFF8FAFC), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ShowChart,
+                    contentDescription = null,
+                    modifier = Modifier.size(80.dp),
+                    tint = Color(0xFF00796B).copy(alpha = 0.2f)
+                )
+                Text("Daily Expense Curve", color = Color.LightGray, fontSize = 12.sp)
+            }
+        }
+    }
+}
+@Composable
+fun WeeklyTrendCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text("Weekly Trend", color = Color.Gray, fontSize = 13.sp)
+                Text("+$120.50", fontWeight = FontWeight.Black, fontSize = 22.sp, color = Color(0xFFD32F2F))
+                Text("More than last week", fontSize = 12.sp, color = Color.Gray)
+            }
+
+            // Trend Icon
+            Box(
+                modifier = Modifier.size(50.dp).background(Color(0xFFFFEBEE), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.TrendingUp,
+                    contentDescription = null,
+                    tint = Color(0xFFD32F2F)
                 )
             }
         }

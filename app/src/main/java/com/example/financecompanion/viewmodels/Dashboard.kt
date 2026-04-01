@@ -42,5 +42,23 @@ class VaultProcessor(private val repository: FinanceRepository = FinanceReposito
         repository.delete(id)
         updateState()
     }
+
+    fun performTransfer(amount: Double, goalName: String) {
+        // 1. Create a transaction that marks the money as "moved"
+        val transferTx = Transaction(
+            title = "Transfer to $goalName",
+            amount = amount,
+            category = "Savings",
+            date = "Today",
+            subtitle = "Internal Transfer", // Fixed your subtitle error here!
+            isIncome = false // It's an "expense" from the main balance
+        )
+
+        // 2. Save it
+        addTransaction(transferTx)
+
+        // 3. Logic to update your Savings Goal progress
+        // (You would update a separate 'currentSavings' variable in your state)
+    }
 }
 
