@@ -21,7 +21,8 @@ import com.example.financecompanion.dataModel.model.VaultState
 fun HomeDashboard(
     state: VaultState,
     onAddTransactionClicked: () -> Unit,
-    onTransferClicked: () -> Unit // ADDED: New parameter
+    onTransferClicked: () -> Unit,
+    onInsightsClicked: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),

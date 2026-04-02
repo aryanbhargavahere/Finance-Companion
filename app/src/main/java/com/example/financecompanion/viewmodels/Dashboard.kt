@@ -1,64 +1,55 @@
 package com.example.financecompanion.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.ui.graphics.Color
-import com.example.financecompanion.dataModel.DataStorage.FinanceRepository
-import com.example.financecompanion.dataModel.model.Budgetlist
-import com.example.financecompanion.dataModel.model.Dataledger
+import androidx.lifecycle.viewModelScope
+import com.example.financecompanion.Room.AppDatabase
 import com.example.financecompanion.dataModel.model.Transaction
 import com.example.financecompanion.dataModel.model.VaultState
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
-class VaultProcessor(private val repository: FinanceRepository = FinanceRepository()) : ViewModel() {
+// Changed to regular ViewModel to avoid Factory complexity in MainActivity
+class VaultProcessor(context: Context) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(VaultState())
-    val uiState = _uiState.asStateFlow()
+    // Access the DAO directly using the provided context
+    private val dao = AppDatabase.getDatabase(context).transactionDao()
 
-    init { updateState() }
+    // Requirement 4 & 7: Automated state mapping from SQLite to UI
+    val uiState: StateFlow<VaultState> = dao.getAll()
+        .map { list ->
+            val income = list.filter { it.isIncome }.sumOf { it.amount }
+            val expenses = list.filter { !it.isIncome }.sumOf { it.amount }
 
-    fun updateState() {
-        val list = repository.entries
-        val income = list.filter { it.isIncome }.sumOf { it.amount }
-        val expenses = list.filter { !it.isIncome }.sumOf { it.amount }
+            VaultState(
+                recentEntries = list,
+                totalIncome = income,
+                totalExpenses = expenses,
+                balance = income - expenses
+            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = VaultState()
+        )
 
-        _uiState.update { it.copy(
-            recentEntries = list,
-            totalIncome = income,
-            totalExpenses = expenses,
-            balance = income - expenses
-        )}
-    }
-
+    // Requirement 2: Permanent Data Entry
     fun addTransaction(t: Transaction) {
-        repository.add(t)
-        updateState()
+        viewModelScope.launch {
+            dao.insert(t)
+        }
     }
 
-    fun removeTransaction(id: String) {
-        repository.delete(id)
-        updateState()
-    }
-
+    // Requirement 3: Goal/Internal Transfer Logic
     fun performTransfer(amount: Double, goalName: String) {
-        // 1. Create a transaction that marks the money as "moved"
         val transferTx = Transaction(
             title = "Transfer to $goalName",
             amount = amount,
             category = "Savings",
             date = "Today",
-            subtitle = "Internal Transfer", // Fixed your subtitle error here!
-            isIncome = false // It's an "expense" from the main balance
+            subtitle = "Internal Transfer",
+            isIncome = false
         )
-
-        // 2. Save it
         addTransaction(transferTx)
-
-        // 3. Logic to update your Savings Goal progress
-        // (You would update a separate 'currentSavings' variable in your state)
     }
 }
-

@@ -10,11 +10,17 @@ class FinanceRepository {
     val entries: List<Transaction> get() = _entries
 
     init {
-        // Initial Mock Data
-        _entries.add(Transaction("1", "Starbucks", 6.50, "Dining", "Today", false,"today"))
-        _entries.add(Transaction("2", "Salary", 4500.0, "Income", "Yesterday", true,"Yesterday"))
+        // Corrected Mock Data Types
+        _entries.add(Transaction(id = 1, title = "Starbucks", amount = 6.50, category = "Dining", date = "Today", subtitle = "Coffee", isIncome = false))
+        _entries.add(Transaction(id = 2, title = "Salary", amount = 4500.0, category = "Income", date = "Yesterday", subtitle = "Monthly Pay", isIncome = true))
     }
 
-    fun add(transaction: Transaction) { _entries.add(0, transaction) }
-    fun delete(id: String) { _entries.removeAll { it.id == id } }
+    fun add(transaction: Transaction) {
+        _entries.add(0, transaction)
+    }
+
+    // Fix: id is an Int in the Entity, so we compare Ints
+    fun delete(id: Int) {
+        _entries.removeAll { it.id == id }
+    }
 }
