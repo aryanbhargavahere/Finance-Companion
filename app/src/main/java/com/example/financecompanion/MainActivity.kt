@@ -1,6 +1,5 @@
 package com.example.financecompanion
 
-import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,13 +24,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import com.example.financecompanion.HomeScreen.*
+import com.example.financecompanion.ProfileInScreens.AppearanceChangeScreen
 import com.example.financecompanion.dataModel.model.Transaction
+import com.example.financecompanion.ui.theme.FinanceCompanionTheme
 import com.example.financecompanion.viewmodels.VaultProcessor
-import androidx.lifecycle.ViewModelProvider
 
-enum class Screen { HOME, ACTIVITY, INSIGHT , PROFILE }
+enum class Screen { HOME, ACTIVITY, INSIGHT, PROFILE, APPEARANCE }
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -39,24 +38,34 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            // FIX: Use a Factory to provide the Application context to the Room Database
             val context = LocalContext.current
             val processor = remember { VaultProcessor(context) }
             val state by processor.uiState.collectAsState()
+
+            // Global UI States
             var currentScreen by remember { mutableStateOf(Screen.HOME) }
+            var isDarkMode by remember { mutableStateOf(false) }
             var showAddSheet by remember { mutableStateOf(false) }
             var showTransferDialog by remember { mutableStateOf(false) }
 
-            MaterialTheme {
+            // Use your new custom theme file
+            FinanceCompanionTheme(darkTheme = isDarkMode) {
                 Scaffold(
-                    topBar = { NexusTopBar() },
-                    bottomBar = {
-                        NexusBottomNavigation(
-                            activeTab = currentScreen,
-                            onTabSelected = { selection -> currentScreen = selection }
-                        )
+                    topBar = {
+                        // Hide TopBar on the Appearance screen for a cleaner settings look
+                        if (currentScreen != Screen.APPEARANCE) NexusTopBar()
                     },
-                    containerColor = Color(0xFFF8FAFC)
+                    bottomBar = {
+                        // Hide BottomBar on the Appearance screen to focus on settings
+                        if (currentScreen != Screen.APPEARANCE) {
+                            NexusBottomNavigation(
+                                activeTab = currentScreen,
+                                onTabSelected = { selection -> currentScreen = selection }
+                            )
+                        }
+                    },
+                    // Use theme-based background instead of hardcoded hex
+                    containerColor = MaterialTheme.colorScheme.background
                 ) { padding ->
                     Box(modifier = Modifier.padding(padding)) {
                         when (currentScreen) {
@@ -68,13 +77,22 @@ class MainActivity : ComponentActivity() {
                             )
                             Screen.INSIGHT -> InsightsScreen(state = state)
                             Screen.ACTIVITY -> ActivityScreen(state = state)
-                            Screen.PROFILE -> ProfileScreen(state = state)
+                            Screen.PROFILE -> ProfileScreen(
+                                state = state,
+                                // Navigation callback for the Appearance button
+                                onNavigateToAppearance = { currentScreen = Screen.APPEARANCE }
+                            )
+                            Screen.APPEARANCE -> AppearanceChangeScreen(
+                                isDarkMode = isDarkMode,
+                                onThemeToggle = { isDarkMode = it },
+                                onBack = { currentScreen = Screen.PROFILE }
+                            )
                         }
 
                         if (showAddSheet) {
                             ModalBottomSheet(
                                 onDismissRequest = { showAddSheet = false },
-                                containerColor = Color.White
+                                containerColor = MaterialTheme.colorScheme.surface
                             ) {
                                 AddTransactionSheet(
                                     onSave = { newTx ->
@@ -89,7 +107,7 @@ class MainActivity : ComponentActivity() {
                         if (showTransferDialog) {
                             TransferDialog(
                                 onConfirm = { amount ->
-                                    processor.performTransfer(amount, "Savings Vault")
+                                    processor.performTransfer(amount, "Add to Savings")
                                     showTransferDialog = false
                                 },
                                 onDismiss = { showTransferDialog = false }
@@ -101,23 +119,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun TransferDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
     var amount by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Move to Savings", fontWeight = FontWeight.Bold) },
+        title = { Text("Add to Savings", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                Text("Enter the amount to transfer to your savings vault.", fontSize = 14.sp)
+                Text("Enter the amount to move to your savings vault.", fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },
                     label = { Text("Amount") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
             }
         },
@@ -128,7 +148,7 @@ fun TransferDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
                     if (value > 0) onConfirm(value)
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00796B))
-            ) { Text("Transfer") }
+            ) { Text("Add to Savings") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
@@ -136,13 +156,13 @@ fun TransferDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionSheet(onSave: (Transaction) -> Unit, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }
 
-    // Define categories based on your project goals
     val categories = listOf("Food", "Entertainment", "Shopping", "Transport", "Health", "Other")
     var selectedCategory by remember { mutableStateOf(categories[0]) }
 
@@ -168,10 +188,9 @@ fun AddTransactionSheet(onSave: (Transaction) -> Unit, onDismiss: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 12.dp)) {
             Switch(checked = isIncome, onCheckedChange = { isIncome = it })
             Spacer(modifier = Modifier.width(8.dp))
-            Text(if (isIncome) "Income Source" else "Expenses")
+            Text(if (isIncome) "Income" else "Expenses")
         }
 
-        // Category Picker Implementation
         if (!isIncome) {
             Text("Category", style = MaterialTheme.typography.labelLarge)
             LazyRow(
@@ -193,15 +212,13 @@ fun AddTransactionSheet(onSave: (Transaction) -> Unit, onDismiss: () -> Unit) {
         Button(
             onClick = {
                 onSave(Transaction(
-                    // Note: id = 0 allows Room to auto-generate the ID
                     id = 0,
                     title = title,
                     amount = amount.toDoubleOrNull() ?: 0.0,
-                    // Use "Income" as category if isIncome is true, else use selected
                     category = if (isIncome) "Salary" else selectedCategory,
                     isIncome = isIncome,
                     subtitle = if (isIncome) "Credit" else "Debit",
-                    date = "Today" // You can replace this with a real Date formatter later
+                    date = "Today"
                 ))
                 onDismiss()
             },
@@ -214,32 +231,35 @@ fun AddTransactionSheet(onSave: (Transaction) -> Unit, onDismiss: () -> Unit) {
     }
 }
 
-// --- TOP BAR & BOTTOM NAV REMAIN THE SAME AS YOUR PREVIOUS CODE ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NexusTopBar() {
     CenterAlignedTopAppBar(
-        title = { Text("Sovereign Ledger", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black, fontSize = 18.sp), color = Color(0xFF0A2540)) },
+        title = { Text("Finance Companion", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black, fontSize = 18.sp), color = MaterialTheme.colorScheme.onBackground) },
         navigationIcon = {
-            Box(modifier = Modifier.padding(start = 16.dp).size(36.dp).clip(CircleShape).background(Color(0xFFE2E8F0)), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF4A5568), modifier = Modifier.size(20.dp))
+            Box(modifier = Modifier.padding(start = 16.dp).size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
             }
         },
         actions = {
-            IconButton(onClick = {}) { Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF0A2540)) }
+            IconButton(onClick = {}) { Icon(Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground) }
         },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color(0xFFF8FAFC))
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
     )
 }
 
 @Composable
 fun NexusBottomNavigation(activeTab: Screen, onTabSelected: (Screen) -> Unit) {
-    NavigationBar(containerColor = Color.White, tonalElevation = 8.dp, modifier = Modifier.clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))) {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 8.dp,
+        modifier = Modifier.clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+    ) {
         val navItems = listOf(
             Triple(Screen.HOME, "HOME", Icons.Default.Home),
             Triple(Screen.ACTIVITY, "ACTIVITY", Icons.Default.BarChart),
             Triple(Screen.INSIGHT, "INSIGHTS", Icons.Default.PieChart),
-            Triple(Screen.PROFILE, "PROFILE", Icons.Default.PersonOutline)
+            Triple(Screen.PROFILE, "PROFILE", Icons.Default.Person)
         )
         navItems.forEach { (screen, label, icon) ->
             NavigationBarItem(
@@ -247,7 +267,12 @@ fun NexusBottomNavigation(activeTab: Screen, onTabSelected: (Screen) -> Unit) {
                 onClick = { onTabSelected(screen) },
                 icon = { Icon(icon, contentDescription = label) },
                 label = { Text(label, fontSize = 10.sp, fontWeight = FontWeight.Black) },
-                colors = NavigationBarItemDefaults.colors(selectedIconColor = Color(0xFF00796B), selectedTextColor = Color(0xFF00796B), unselectedIconColor = Color.Gray, indicatorColor = Color.Transparent)
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color(0xFF00796B),
+                    selectedTextColor = Color(0xFF00796B),
+                    unselectedIconColor = Color.Gray,
+                    indicatorColor = Color.Transparent
+                )
             )
         }
     }

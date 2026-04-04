@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.financecompanion.HomeScreen.TransactionRow // Reusing the row component we made earlier
+import com.example.financecompanion.HomeScreen.TransactionRow
 import com.example.financecompanion.dataModel.model.VaultState
 
 @Composable
@@ -24,12 +24,12 @@ fun ActivityScreen(state: VaultState) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8FAFC)) // Clean slate background
+            .background(Color(0xFFF8FAFC))
             .padding(horizontal = 20.dp)
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 1. SEARCH BAR (Matching the top of your 2nd image)
+        // 1. SEARCH BAR
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -57,51 +57,89 @@ fun ActivityScreen(state: VaultState) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
         ) {
-            // Section: TODAY
-            item {
-                Text(
-                    text = "TODAY",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
-                    ),
-                    color = Color.Gray
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            // Filtering logic based on date and search query
+            // Filtering logic based on the 'date' field and search query
             val todayEntries = state.recentEntries.filter {
-                it.subtitle.contains("Today", ignoreCase = true) &&
+                it.date.contains("Today", ignoreCase = true) &&
                         it.title.contains(searchQuery, ignoreCase = true)
-            }
-
-            items(todayEntries) { entry ->
-                TransactionRow(entry)
-            }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
-            // Section: YESTERDAY
-            item {
-                Text(
-                    text = "YESTERDAY",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
-                    ),
-                    color = Color.Gray
-                )
-                Spacer(modifier = Modifier.height(8.dp))
             }
 
             val yesterdayEntries = state.recentEntries.filter {
-                it.subtitle.contains("Yesterday", ignoreCase = true) &&
+                it.date.contains("Yesterday", ignoreCase = true) &&
                         it.title.contains(searchQuery, ignoreCase = true)
             }
 
-            items(yesterdayEntries) { entry ->
-                TransactionRow(entry)
+            val otherEntries = state.recentEntries.filter {
+                !it.date.contains("Today", ignoreCase = true) &&
+                        !it.date.contains("Yesterday", ignoreCase = true) &&
+                        it.title.contains(searchQuery, ignoreCase = true)
+            }
+
+            // Section: TODAY
+            if (todayEntries.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "TODAY",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        ),
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                items(todayEntries) { entry ->
+                    TransactionRow(entry)
+                }
+            }
+
+            // Section: YESTERDAY
+            if (yesterdayEntries.isNotEmpty()) {
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "YESTERDAY",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        ),
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                items(yesterdayEntries) { entry ->
+                    TransactionRow(entry)
+                }
+            }
+
+            // Section: PREVIOUS (For everything else)
+            if (otherEntries.isNotEmpty()) {
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "PREVIOUS",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        ),
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                items(otherEntries) { entry ->
+                    TransactionRow(entry)
+                }
+            }
+
+            // Final check: if the total list is empty
+            if (state.recentEntries.isEmpty()) {
+                item {
+                    Box(Modifier.fillParentMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                        Text("No transactions found", color = Color.Gray)
+                    }
+                }
             }
 
             // Padding at the bottom for the Navigation Bar

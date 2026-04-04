@@ -21,11 +21,16 @@ class VaultProcessor(context: Context) : ViewModel() {
             val income = list.filter { it.isIncome }.sumOf { it.amount }
             val expenses = list.filter { !it.isIncome }.sumOf { it.amount }
 
+            val totalsByCategory = list.filter { !it.isIncome }
+                .groupBy { it.category }
+                .mapValues { entry -> entry.value.sumOf { it.amount } }
+
             VaultState(
                 recentEntries = list,
                 totalIncome = income,
                 totalExpenses = expenses,
-                balance = income - expenses
+                balance = income - expenses,
+                categoryTotals = totalsByCategory
             )
         }.stateIn(
             scope = viewModelScope,

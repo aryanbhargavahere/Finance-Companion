@@ -73,7 +73,7 @@ fun QuickActionRow(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         ActionItem("Add", Icons.Default.Add, Color(0xFFB2EBF2), onAddClick)
-        ActionItem("Transfer", Icons.Default.SyncAlt, Color(0xFFE3F2FD), onTransferClick)
+        ActionItem("Add To Savings", Icons.Default.SyncAlt, Color(0xFFE3F2FD), onTransferClick)
         ActionItem("Insights", Icons.Default.PieChart, Color(0xFFC8E6C9), { /* Navigate via Bottom Nav */ })
     }
 }

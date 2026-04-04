@@ -1,6 +1,8 @@
 package com.example.financecompanion.HomeScreen
 
+import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -17,11 +19,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.financecompanion.ProfileInScreens.AppearanceChangeScreen
 import com.example.financecompanion.dataModel.model.VaultState
 
 
 @Composable
-fun ProfileScreen(state: VaultState) {
+fun ProfileScreen(state: VaultState,
+                  onNavigateToAppearance: () -> Unit) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -55,12 +59,6 @@ fun ProfileScreen(state: VaultState) {
                 fontWeight = FontWeight.Black,
                 color = Color(0xFF0A2540)
             )
-            Text(
-                text = "Premium Member",
-                fontSize = 14.sp,
-                color = Color(0xFF00796B),
-                fontWeight = FontWeight.Bold
-            )
         }
 
         item { Spacer(modifier = Modifier.height(32.dp)) }
@@ -68,18 +66,18 @@ fun ProfileScreen(state: VaultState) {
         // 2. SETTINGS CATEGORIES
         item {
             ProfileSectionHeader("ACCOUNT SETTINGS")
-            ProfileOptionItem("Personal Information", Icons.Default.Badge)
-            ProfileOptionItem("Security & Privacy", Icons.Default.Shield)
-            ProfileOptionItem("Payment Methods", Icons.Default.CreditCard)
+            ProfileOptionItem("Personal Information", Icons.Default.Badge, onClick = {})
+            ProfileOptionItem("Security & Privacy", Icons.Default.Shield, onClick = {})
+            ProfileOptionItem("Payment Methods", Icons.Default.CreditCard, onClick = {})
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
 
         item {
             ProfileSectionHeader("PREFERENCES")
-            ProfileOptionItem("Notifications", Icons.Default.NotificationsNone)
-            ProfileOptionItem("Currency (USD)", Icons.Default.AttachMoney)
-            ProfileOptionItem("Appearance", Icons.Default.Palette)
+            ProfileOptionItem("Notifications", Icons.Default.NotificationsNone, onClick = {})
+            ProfileOptionItem("Currency (USD)", Icons.Default.AttachMoney, onClick = {})
+            ProfileOptionItem("Appearance", Icons.Default.Palette, onClick = {onNavigateToAppearance()})
         }
 
         item { Spacer(modifier = Modifier.height(32.dp)) }
@@ -114,12 +112,13 @@ fun ProfileSectionHeader(title: String) {
 }
 
 @Composable
-fun ProfileOptionItem(title: String, icon: ImageVector) {
+fun ProfileOptionItem(title: String, icon: ImageVector, onClick: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
         color = Color.White,
+        onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         shadowElevation = 1.dp
     ) {
