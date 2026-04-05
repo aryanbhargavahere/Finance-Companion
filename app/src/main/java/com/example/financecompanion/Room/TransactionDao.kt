@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.example.financecompanion.dataModel.model.Transaction
 import kotlinx.coroutines.flow.Flow
 
@@ -18,4 +19,7 @@ interface TransactionDao {
 
     @Delete
     suspend fun delete(transaction: Transaction)
+
+    @Update
+    suspend fun update (transaction: Transaction)
 }

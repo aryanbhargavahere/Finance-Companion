@@ -25,9 +25,15 @@ import com.example.financecompanion.dataModel.model.VaultState
 import java.util.Locale
 
 @Composable
-fun InsightsScreen(state: VaultState) {
+fun InsightsScreen(
+    state: VaultState,
+    currencySymbol: String
+) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 20.dp),
         contentPadding = PaddingValues(bottom = 24.dp)
     ) {
         item {
@@ -35,53 +41,63 @@ fun InsightsScreen(state: VaultState) {
                 "Financial Analysis",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(vertical = 24.dp)
             )
         }
 
         // 1. Visual Pie Chart Card
-        item { SpendingChartCard(state) }
+        item { SpendingChartCard(state, currencySymbol) }
 
         // 2. Net Balance / Trend Card
-        item { WeeklyTrendCard(state) }
+        item { WeeklyTrendCard(state, currencySymbol) }
 
-        // 3. Goal Progress (Tracks "Add to Savings" transactions)
-        item {
-            val actualSavings = state.recentEntries
-                .filter {
-                    it.category == "Savings Vault" ||
-                            it.title.contains("Add to Savings", ignoreCase = true)
-                }
-                .sumOf { it.amount }
-                .toDouble() // Fix for overload resolution ambiguity
-
-            SavingsGoalCard(current = actualSavings, target = 2000.0)
-            Spacer(modifier = Modifier.height(20.dp))
-        }
-
-        // 4. Category Breakdown
+        // 3. Category Breakdown
+        // Filter out income and savings to focus strictly on expenses
         val categories = state.recentEntries
-            .filter { !it.isIncome && it.category != "Savings Vault" && !it.title.contains("Add to Savings", ignoreCase = true) }
+            .filter { !it.isIncome && it.category != "Savings" }
             .groupBy { it.category }
 
         if (categories.isNotEmpty()) {
-            item { Text("CATEGORY BREAKDOWN", fontWeight = FontWeight.Bold, color = Color.Gray) }
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "CATEGORY BREAKDOWN",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
             items(categories.toList()) { (category, list) ->
                 CategoryInsightRow(
                     category = category,
                     categoryAmount = list.sumOf { it.amount },
-                    totalExpenses = state.totalExpenses
+                    totalExpenses = state.totalExpenses,
+                    currencySymbol = currencySymbol
                 )
+            }
+        } else {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No expense data to analyze", color = Color.Gray)
+                }
             }
         }
     }
 }
 
 @Composable
-fun SpendingChartCard(state: VaultState) {
+fun SpendingChartCard(state: VaultState, currencySymbol: String) {
+    val expenseColor = Color(0xFF00796B)
+    val onSurface = MaterialTheme.colorScheme.onSurface
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(24.dp)
     ) {
@@ -92,68 +108,94 @@ fun SpendingChartCard(state: VaultState) {
             Box(modifier = Modifier.size(100.dp), contentAlignment = Alignment.Center) {
                 Canvas(modifier = Modifier.size(100.dp)) {
                     drawArc(
-                        color = Color(0xFFF1F5F9),
+                        color = Color.LightGray.copy(alpha = 0.2f),
                         startAngle = 0f,
                         sweepAngle = 360f,
                         useCenter = false,
                         style = Stroke(width = 20f)
                     )
-                    val sweep = if (state.totalIncome > 0) (state.totalExpenses / state.totalIncome).toFloat() * 360f else 0f
+                    val sweep = if (state.totalIncome > 0)
+                        (state.totalExpenses / state.totalIncome).toFloat() * 360f
+                    else 0f
+
                     drawArc(
-                        color = Color(0xFF00796B),
+                        color = expenseColor,
                         startAngle = -90f,
                         sweepAngle = sweep.coerceIn(0f, 360f),
                         useCenter = false,
                         style = Stroke(width = 20f, cap = StrokeCap.Round)
                     )
                 }
-                Text("${((state.totalExpenses / state.totalIncome.coerceAtLeast(1.0)) * 100).toInt()}%", fontWeight = FontWeight.Black, fontSize = 14.sp)
+                Text(
+                    text = "${((state.totalExpenses / state.totalIncome.coerceAtLeast(1.0)) * 100).toInt()}%",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 14.sp,
+                    color = onSurface
+                )
             }
 
             Spacer(modifier = Modifier.width(24.dp))
 
             Column {
-                Text("Expense Ratio", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Expense Ratio", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = onSurface)
                 Text("vs. Total Income", color = Color.Gray, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("$${String.format(Locale.US, "%.2f", state.totalExpenses)}", fontWeight = FontWeight.Black, color = Color(0xFF00796B))
+                Text(
+                    "$currencySymbol${String.format(Locale.US, "%.2f", state.totalExpenses)}",
+                    fontWeight = FontWeight.Black,
+                    color = expenseColor
+                )
             }
         }
     }
 }
 
 @Composable
-fun WeeklyTrendCard(state: VaultState) {
-    val balance = state.totalIncome - state.totalExpenses
+fun WeeklyTrendCard(state: VaultState, currencySymbol: String) {
+    val balance = state.totalIncome - (state.totalExpenses + state.totalSavings)
+    val positiveColor = Color(0xFF00796B)
+    val negativeColor = Color(0xFFD32F2F)
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(24.dp)
     ) {
         Row(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(20.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
                 Text("Net Balance", color = Color.Gray, fontSize = 13.sp)
                 Text(
-                    text = if(balance >= 0) "+$${String.format(Locale.US, "%.2f", balance)}" else "-$${String.format(Locale.US, "%.2f", kotlin.math.abs(balance))}",
+                    text = if(balance >= 0) "+$currencySymbol${String.format(Locale.US, "%.2f", balance)}"
+                    else "-$currencySymbol${String.format(Locale.US, "%.2f", kotlin.math.abs(balance))}",
                     fontWeight = FontWeight.Black,
                     fontSize = 22.sp,
-                    color = if (balance >= 0) Color(0xFF00796B) else Color(0xFFD32F2F)
+                    color = if (balance >= 0) positiveColor else negativeColor
                 )
-                Text(if (balance >= 0) "Safe to spend" else "Over budget", fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    text = if (balance >= 0) "Safe to spend" else "Over budget",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
             }
 
             Box(
-                modifier = Modifier.size(50.dp).background(if(balance < 0) Color(0xFFFFEBEE) else Color(0xFFE0F2F1), CircleShape),
+                modifier = Modifier
+                    .size(50.dp)
+                    .background(
+                        if(balance < 0) negativeColor.copy(alpha = 0.1f)
+                        else positiveColor.copy(alpha = 0.1f),
+                        CircleShape
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if(balance >= 0) Icons.Default.TrendingUp else Icons.Default.ShowChart,
                     contentDescription = null,
-                    tint = if(balance < 0) Color(0xFFD32F2F) else Color(0xFF00796B)
+                    tint = if(balance < 0) negativeColor else positiveColor
                 )
             }
         }
@@ -161,22 +203,32 @@ fun WeeklyTrendCard(state: VaultState) {
 }
 
 @Composable
-fun CategoryInsightRow(category: String, categoryAmount: Double, totalExpenses: Double) {
+fun CategoryInsightRow(category: String, categoryAmount: Double, totalExpenses: Double, currencySymbol: String) {
     val percentage = if (totalExpenses > 0) (categoryAmount / totalExpenses).toFloat() else 0f
+
     Surface(
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(16.dp),
         shadowElevation = 0.5.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(category, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("$${String.format(Locale.US, "%.0f", categoryAmount)}", fontWeight = FontWeight.Black, color = Color(0xFF00796B))
+                Text(category, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    "$currencySymbol${String.format(Locale.US, "%.0f", categoryAmount)}",
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFF00796B)
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Box(Modifier.fillMaxWidth().height(4.dp).background(Color(0xFFF1F5F9), CircleShape)) {
-                Box(Modifier.fillMaxWidth(percentage.coerceIn(0f, 1f)).fillMaxHeight().background(Color(0xFF00796B), CircleShape))
+            Box(Modifier.fillMaxWidth().height(6.dp).clip(CircleShape).background(Color.LightGray.copy(alpha = 0.2f))) {
+                Box(
+                    Modifier
+                        .fillMaxWidth(percentage.coerceIn(0f, 1f))
+                        .fillMaxHeight()
+                        .background(Color(0xFF00796B), CircleShape)
+                )
             }
         }
     }

@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.financecompanion.dataModel.model.Transaction
 
-@Database(entities = [Transaction::class], version = 1)
+@Database(entities = [Transaction::class], version = 2) // UPDATED: Changed from 1 to 2
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
 
@@ -20,7 +20,10 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "finance_db"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration() // ADDED: Prevents the crash by recreating the DB
+                    .build()
+
                 INSTANCE = instance
                 instance
             }

@@ -1,8 +1,6 @@
 package com.example.financecompanion.HomeScreen
 
-import android.content.Intent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -19,13 +17,17 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.financecompanion.ProfileInScreens.AppearanceChangeScreen
 import com.example.financecompanion.dataModel.model.VaultState
 
 
 @Composable
-fun ProfileScreen(state: VaultState,
-                  onNavigateToAppearance: () -> Unit) {
+fun ProfileScreen(
+    state: VaultState,
+    onNavigateToAppearance: () -> Unit,
+    onNavigateToCurrency: () -> Unit,
+    onNavigateToPersonal: () -> Unit,
+    userName: String
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -66,9 +68,8 @@ fun ProfileScreen(state: VaultState,
         // 2. SETTINGS CATEGORIES
         item {
             ProfileSectionHeader("ACCOUNT SETTINGS")
-            ProfileOptionItem("Personal Information", Icons.Default.Badge, onClick = {})
+            ProfileOptionItem("Personal Information", Icons.Default.Badge, onClick = {onNavigateToPersonal()})
             ProfileOptionItem("Security & Privacy", Icons.Default.Shield, onClick = {})
-            ProfileOptionItem("Payment Methods", Icons.Default.CreditCard, onClick = {})
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
@@ -76,7 +77,7 @@ fun ProfileScreen(state: VaultState,
         item {
             ProfileSectionHeader("PREFERENCES")
             ProfileOptionItem("Notifications", Icons.Default.NotificationsNone, onClick = {})
-            ProfileOptionItem("Currency (USD)", Icons.Default.AttachMoney, onClick = {})
+            ProfileOptionItem("Currency", Icons.Default.AttachMoney, onClick = {onNavigateToCurrency()})
             ProfileOptionItem("Appearance", Icons.Default.Palette, onClick = {onNavigateToAppearance()})
         }
 
