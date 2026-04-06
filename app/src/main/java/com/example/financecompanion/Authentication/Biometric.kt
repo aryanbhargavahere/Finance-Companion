@@ -5,6 +5,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 
+// For Biometric Authentication at the start
 object BiometricAuth {
     fun authenticate(
         activity: FragmentActivity,
@@ -26,7 +27,6 @@ object BiometricAuth {
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    // Keep waiting for a valid biometric
                 }
             })
 
