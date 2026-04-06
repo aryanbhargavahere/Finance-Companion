@@ -62,12 +62,6 @@ fun NotificationScreen(onBack: () -> Unit) {
                 color = Color.Gray,
                 fontWeight = FontWeight.Medium
             )
-
-            Text(
-                text = "We'll let you know when something happens.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray.copy(alpha = 0.7f)
-            )
         }
     }
 }

@@ -2,6 +2,7 @@ package com.example.financecompanion
 
 import android.content.Context
 import android.os.Bundle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -32,21 +33,28 @@ import com.example.financecompanion.Authentication.BiometricAuth
 import com.example.financecompanion.HomeScreen.*
 import com.example.financecompanion.ProfileInScreens.AppearanceChangeScreen
 import com.example.financecompanion.ProfileInScreens.Currencychange
+import com.example.financecompanion.ProfileInScreens.NotificationScreen
 import com.example.financecompanion.ProfileInScreens.PersonalInfoScreen
+import com.example.financecompanion.ProfileInScreens.SecurityPrivacyScreen
 import com.example.financecompanion.dataModel.model.Transaction
 import com.example.financecompanion.ui.theme.FinanceCompanionTheme
 import com.example.financecompanion.viewmodels.VaultProcessor
 
-// --- App Navigation ---
+/**
+ * Main Navigation Enum to handle screen switching across the app
+ */
 enum class Screen {
-    HOME, ACTIVITY, INSIGHT, PROFILE, APPEARANCE, CURRENCY, PERSONAL_INFO, NOTIFICATION
+    HOME, ACTIVITY, INSIGHT, PROFILE, APPEARANCE, CURRENCY, PERSONAL_INFO, NOTIFICATION, SECURITY
 }
 
 class MainActivity : FragmentActivity() {
 
+    // Keys for SharedPreferences (Used for lightweight user settings)
     private val PREFS_NAME = "finance_prefs"
     private val KEY_USER_NAME = "user_name"
     private val KEY_USER_CURRENCY = "user_currency"
+    private val KEY_HIDE_BALANCE = "hide_balance"
+    private val KEY_LOCK_TIMER = "lock_timer"
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,28 +63,68 @@ class MainActivity : FragmentActivity() {
 
         setContent {
             val context = LocalContext.current
+
+            val performLogout: () -> Unit = {
+                // closes all activities and user logs out
+                this@MainActivity.finishAffinity()
+            }
+
+            // ViewModel setup - handles database logic for transactions and the savings goal
             val processor = remember { VaultProcessor(context) }
             val state by processor.uiState.collectAsState()
-            val monthlyGoal by processor.monthlyGoal.collectAsState()
+            val monthlyGoal by processor.monthlyGoal.collectAsState() // Persistent Room data
+
             val sharedPrefs = remember { getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
 
-            // --- App State ---
+            // --- NAVIGATION STACK STATE ---
+            val navigationStack = remember { mutableStateListOf(Screen.HOME) }
+            val currentScreen = navigationStack.last()
+
+            // Navigation Helpers
+            val navigateTo: (Screen) -> Unit = { screen ->
+                if (navigationStack.last() != screen) {
+                    navigationStack.add(screen)
+                }
+            }
+
+            val navigateBack: () -> Unit = {
+                if (navigationStack.size > 1) {
+                    navigationStack.removeAt(navigationStack.size - 1)
+                }
+            }
+
+            // Handle system back button
+            BackHandler(enabled = navigationStack.size > 1) {
+                navigateBack()
+            }
+
+            // --- UI & Lifecycle State ---
             var isAuthenticated by remember { mutableStateOf(false) }
-            var currentScreen by remember { mutableStateOf(Screen.HOME) }
             var isDarkMode by remember { mutableStateOf(false) }
 
+            // Load user profile from SharedPreferences
             var userName by remember { mutableStateOf(sharedPrefs.getString(KEY_USER_NAME, "") ?: "") }
-            var userCurrency by remember { mutableStateOf(sharedPrefs.getString(KEY_USER_CURRENCY, "USD") ?: "USD") }
+            var userCurrency by remember { mutableStateOf(sharedPrefs.getString(KEY_USER_CURRENCY, "INR") ?: "INR") }
             var userCountry by remember { mutableStateOf("India") }
             var userLanguage by remember { mutableStateOf("English") }
 
-            // --- UI Interaction States ---
+            // Security States
+            var hideBalance by remember { mutableStateOf(sharedPrefs.getBoolean(KEY_HIDE_BALANCE, false)) }
+            var lockTimer by remember { mutableStateOf(sharedPrefs.getInt(KEY_LOCK_TIMER, 0)) }
+
+            // Control states for BottomSheets and Dialogs
             var showNameOnboarding by remember { mutableStateOf(false) }
             var showCurrencyOnboarding by remember { mutableStateOf(false) }
             var showAddSheet by remember { mutableStateOf(false) }
             var showTransferDialog by remember { mutableStateOf(false) }
             var showGoalDialog by remember { mutableStateOf(false) }
 
+            // Full Reset Logic
+            val performFullReset: () -> Unit = {
+                this@MainActivity.finishAffinity()
+            }
+
+            // Dynamic currency symbol helper
             val currencySymbol = remember(userCurrency) {
                 when (userCurrency) {
                     "EUR" -> "€"
@@ -87,13 +135,14 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            // --- Navigation & Onboarding Logic ---
+            // Trigger onboarding if the name is missing after login
             LaunchedEffect(isAuthenticated) {
                 if (isAuthenticated && userName.isEmpty()) {
                     showNameOnboarding = true
                 }
             }
 
+            // Initial Fingerprint/Biometric check on app launch
             LaunchedEffect(Unit) {
                 BiometricAuth.authenticate(this@MainActivity) { success ->
                     isAuthenticated = success
@@ -104,24 +153,29 @@ class MainActivity : FragmentActivity() {
                 if (isAuthenticated) {
                     Scaffold(
                         topBar = {
-                            val shouldShowTopBar = currentScreen !in listOf(
-                                Screen.APPEARANCE, Screen.CURRENCY, Screen.PERSONAL_INFO, Screen.NOTIFICATION
+                            val noTopBarScreens = listOf(
+                                Screen.APPEARANCE, Screen.CURRENCY, Screen.PERSONAL_INFO,
+                                Screen.NOTIFICATION, Screen.SECURITY
                             )
-                            if (shouldShowTopBar) {
+                            if (currentScreen !in noTopBarScreens) {
                                 FinanceCompanionTopBar(
-                                    onProfileClick = { currentScreen = Screen.PROFILE },
-                                    onNotificationClick = { currentScreen = Screen.NOTIFICATION }
+                                    onProfileClick = { navigateTo(Screen.PROFILE) },
+                                    onNotificationClick = { navigateTo(Screen.NOTIFICATION) }
                                 )
                             }
                         },
                         bottomBar = {
-                            val shouldShowBottomBar = currentScreen !in listOf(
-                                Screen.APPEARANCE, Screen.CURRENCY, Screen.PERSONAL_INFO, Screen.NOTIFICATION
+                            val noBottomBarScreens = listOf(
+                                Screen.APPEARANCE, Screen.CURRENCY, Screen.PERSONAL_INFO,
+                                Screen.NOTIFICATION, Screen.SECURITY
                             )
-                            if (shouldShowBottomBar) {
+                            if (currentScreen !in noBottomBarScreens) {
                                 FinanceCompanionBottomNavigation(
                                     activeTab = currentScreen,
-                                    onTabSelected = { currentScreen = it }
+                                    onTabSelected = {
+                                        navigationStack.clear()
+                                        navigationStack.add(it)
+                                    }
                                 )
                             }
                         }
@@ -129,24 +183,28 @@ class MainActivity : FragmentActivity() {
                         Box(modifier = Modifier.padding(padding)) {
                             when (currentScreen) {
                                 Screen.HOME -> HomeDashboard(
-                                    state, monthlyGoal, currencySymbol,
-                                    { showAddSheet = true }, { showTransferDialog = true },
-                                    { currentScreen = Screen.INSIGHT }, { showGoalDialog = true }
+                                    state, monthlyGoal, currencySymbol,hideBalance,
+                                    onAddTransactionClicked = { showAddSheet = true },
+                                    onTransferClicked = { showTransferDialog = true },
+                                    onInsightsClicked = { navigateTo(Screen.INSIGHT) },
+                                    onEditGoalClicked = { showGoalDialog = true }
                                 )
                                 Screen.INSIGHT -> InsightsScreen(state, currencySymbol)
                                 Screen.ACTIVITY -> TransactionScreen(state, processor, currencySymbol)
                                 Screen.PROFILE -> ProfileScreen(
                                     state = state,
                                     userName = userName,
-                                    onNavigateToAppearance = { currentScreen = Screen.APPEARANCE },
-                                    onNavigateToCurrency = { currentScreen = Screen.CURRENCY },
-                                    onNavigateToPersonal = { currentScreen = Screen.PERSONAL_INFO },
-                                    onNavigateToNotifications = { currentScreen = Screen.NOTIFICATION }
+                                    onNavigateToAppearance = { navigateTo(Screen.APPEARANCE) },
+                                    onNavigateToCurrency = { navigateTo(Screen.CURRENCY) },
+                                    onNavigateToPersonal = { navigateTo(Screen.PERSONAL_INFO) },
+                                    onNavigateToNotifications = { navigateTo(Screen.NOTIFICATION) },
+                                    onNavigateToSecurity = { navigateTo(Screen.SECURITY) },
+                                    onLogoutClick = { performLogout() }
                                 )
                                 Screen.APPEARANCE -> AppearanceChangeScreen(
                                     isDarkMode,
                                     { isDarkMode = it },
-                                    { currentScreen = Screen.PROFILE }
+                                    { navigateBack() }
                                 )
                                 Screen.CURRENCY -> Currencychange(
                                     userCurrency,
@@ -154,7 +212,7 @@ class MainActivity : FragmentActivity() {
                                         userCurrency = newCurr
                                         sharedPrefs.edit { putString(KEY_USER_CURRENCY, newCurr) }
                                     },
-                                    { currentScreen = Screen.PROFILE }
+                                    { navigateBack() }
                                 )
                                 Screen.PERSONAL_INFO -> PersonalInfoScreen(
                                     userName, userCountry, userLanguage,
@@ -163,12 +221,27 @@ class MainActivity : FragmentActivity() {
                                         sharedPrefs.edit { putString(KEY_USER_NAME, newName) }
                                     },
                                     { userCountry = it }, { userLanguage = it },
-                                    { currentScreen = Screen.PROFILE }
+                                    { navigateBack() }
                                 )
-                                Screen.NOTIFICATION -> NotificationScreen(onBack = { currentScreen = Screen.HOME })
+                                Screen.NOTIFICATION -> NotificationScreen(onBack = { navigateBack() })
+                                Screen.SECURITY -> SecurityPrivacyScreen(
+                                    hideBalance = hideBalance,
+                                    onHideBalanceChange = {
+                                        hideBalance = it
+                                        sharedPrefs.edit { putBoolean(KEY_HIDE_BALANCE, it) }
+                                    },
+                                    lockTimer = lockTimer,
+                                    onLockTimerChange = {
+                                        lockTimer = it
+                                        sharedPrefs.edit { putInt(KEY_LOCK_TIMER, it) }
+                                    },
+                                    onResetData = { performFullReset() },
+                                    onBack = { navigateBack() }
+                                )
                             }
 
-                            // --- Dialog Overlays ---
+                            // --- Overlay Components ---
+
                             if (showNameOnboarding) {
                                 OnboardingNameDialog { name ->
                                     userName = name
@@ -207,7 +280,7 @@ class MainActivity : FragmentActivity() {
 
                             if (showGoalDialog) {
                                 SetSavingsGoalDialog(
-                                    monthlyGoal,
+                                    currentGoal = monthlyGoal,
                                     onDismiss = { showGoalDialog = false },
                                     onConfirm = {
                                         processor.updateMonthlyGoal(it)
@@ -227,49 +300,7 @@ class MainActivity : FragmentActivity() {
     }
 }
 
-// --- Specialized Screens ---
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun NotificationScreen(onBack: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        CenterAlignedTopAppBar(
-            title = {
-                Text("Notifications", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-            },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                }
-            },
-            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
-        )
-
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Default.NotificationsNone,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "No notifications for now",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.Gray,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
+// --- UI Components & Dialogs ---
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -302,8 +333,6 @@ fun FinanceCompanionTopBar(onProfileClick: () -> Unit, onNotificationClick: () -
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
     )
 }
-
-// --- Dialogs & Sheets ---
 
 @Composable
 fun OnboardingNameDialog(onConfirm: (String) -> Unit) {
@@ -374,27 +403,33 @@ fun AuthLockedScreen(onRetry: () -> Unit) {
 
 @Composable
 fun SetSavingsGoalDialog(currentGoal: Double, onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
-    var goalInput by remember { mutableStateOf(currentGoal.toString()) }
+    var goalInput by remember { mutableStateOf(if (currentGoal > 0.0) currentGoal.toString() else "") }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Monthly Savings Goal", fontWeight = FontWeight.Bold) },
+        title = { Text("Set Monthly Goal", fontWeight = FontWeight.Bold) },
         text = {
-            OutlinedTextField(
-                value = goalInput,
-                onValueChange = { goalInput = it },
-                label = { Text("Goal Amount") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                shape = RoundedCornerShape(12.dp)
-            )
+            Column {
+                Text("Your goal is stored securely and helps track your progress.", fontSize = 12.sp, color = Color.Gray)
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = goalInput,
+                    onValueChange = { goalInput = it },
+                    label = { Text("Goal Amount") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         },
         confirmButton = {
             Button(
                 onClick = {
                     val value = goalInput.toDoubleOrNull() ?: 0.0
-                    if (value > 0) onConfirm(value)
+                    onConfirm(value)
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00796B))
-            ) { Text("Save") }
+            ) { Text("Save Goal") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
@@ -434,12 +469,14 @@ fun AddTransaction(onSave: (Transaction) -> Unit, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }
+
     val categories = listOf("Food", "Entertainment", "Shopping", "Transport", "Health", "Other")
     var selectedCategory by remember { mutableStateOf(categories[0]) }
 
     Column(Modifier.padding(24.dp).fillMaxWidth().navigationBarsPadding()) {
         Text("New Entry", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
+
         OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text("Amount") }, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
 
@@ -465,7 +502,6 @@ fun AddTransaction(onSave: (Transaction) -> Unit, onDismiss: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-                // FIXED PARAMETER ORDER: id, title, amount, category, isIncome, subtitle, date
                 onSave(Transaction(
                     id = 0,
                     title = title,

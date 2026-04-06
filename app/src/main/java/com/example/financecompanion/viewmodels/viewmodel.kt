@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.financecompanion.Room.AppDatabase
 import com.example.financecompanion.currency.Currencycalculate
 import com.example.financecompanion.dataModel.model.Transaction
+import com.example.financecompanion.dataModel.model.UserPreferences
 import com.example.financecompanion.dataModel.model.VaultState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -69,11 +70,15 @@ class VaultProcessor(context: Context) : ViewModel() {
         }
     }
 
-    private val _monthlyGoal = MutableStateFlow(2000.0) // Default goal
-    val monthlyGoal = _monthlyGoal.asStateFlow()
+    // Collect the goal directly from the database Flow
+    val monthlyGoal: StateFlow<Double> = dao.getMonthlyGoal()
+        .map { it ?: 0.0 } // Default to 0.0 if null
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     fun updateMonthlyGoal(newGoal: Double) {
-        _monthlyGoal.value = newGoal
+        viewModelScope.launch {
+            dao.saveMonthlyGoal(UserPreferences(monthlyGoal = newGoal))
+        }
     }
 
     fun performTransfer(amount: Double, goalName: String) {
@@ -87,4 +92,5 @@ class VaultProcessor(context: Context) : ViewModel() {
         )
         addTransaction(transferTx)
     }
+
 }

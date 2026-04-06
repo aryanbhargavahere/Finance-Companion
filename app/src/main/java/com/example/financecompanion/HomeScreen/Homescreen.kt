@@ -23,6 +23,7 @@ fun HomeDashboard(
     state: VaultState,
     monthlyGoal: Double,
     currencySymbol: String = "$",
+    hideBalance: Boolean = false, // NEW: Parameter to control visibility
     onAddTransactionClicked: () -> Unit,
     onTransferClicked: () -> Unit,
     onInsightsClicked: () -> Unit,
@@ -34,12 +35,12 @@ fun HomeDashboard(
         contentPadding = PaddingValues(bottom = 20.dp, start = 20.dp, end = 20.dp)
     ) {
         item {
-            // UPDATED: Added currencySymbol parameter
             WealthCard(
                 balance = state.balance,
                 income = state.totalIncome,
                 expenses = state.totalExpenses,
-                currencySymbol = currencySymbol
+                currencySymbol = currencySymbol,
+                hideBalance = hideBalance // Pass state down
             )
         }
 
@@ -49,7 +50,6 @@ fun HomeDashboard(
                 color = Color.Transparent,
                 shape = RoundedCornerShape(24.dp)
             ) {
-                // UPDATED: Added currencySymbol parameter
                 SavingsGoalCard(
                     current = state.totalSavings,
                     target = monthlyGoal,
@@ -88,7 +88,6 @@ fun HomeDashboard(
             }
         } else {
             items(recentItems) { tx ->
-                // UPDATED: Added currencySymbol parameter
                 TransactionRow(
                     transaction = tx,
                     currencySymbol = currencySymbol
@@ -120,7 +119,7 @@ fun QuickActionRow(
 fun SavingsGoalCard(
     current: Double,
     target: Double,
-    currencySymbol: String = "$" // UPDATED: Added parameter
+    currencySymbol: String = "$"
 ) {
     val progress = (current / target.coerceAtLeast(1.0)).toFloat().coerceIn(0f, 1f)
 
@@ -149,14 +148,12 @@ fun SavingsGoalCard(
                 )
             }
             Row(verticalAlignment = Alignment.Bottom) {
-                // UPDATED: Replaced hardcoded $ with currencySymbol
                 Text(
                     "$currencySymbol${String.format(Locale.US, "%,.0f", current)}",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
-                // UPDATED: Replaced hardcoded $ with currencySymbol
                 Text(
                     " / $currencySymbol${String.format(Locale.US, "%,.0f", target)}",
                     style = MaterialTheme.typography.bodyMedium,
@@ -189,7 +186,8 @@ fun WealthCard(
     balance: Double,
     income: Double,
     expenses: Double,
-    currencySymbol: String = "$"
+    currencySymbol: String = "$",
+    hideBalance: Boolean = false // NEW: Parameter
 ) {
     Card(
         modifier = Modifier
@@ -207,7 +205,7 @@ fun WealthCard(
             )
 
             Text(
-                text = "$currencySymbol${String.format(Locale.US, "%,.2f", balance)}",
+                text = if (hideBalance) "****" else "$currencySymbol${String.format(Locale.US, "%,.2f", balance)}",
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 32.sp
@@ -221,8 +219,8 @@ fun WealthCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                FinanceSummaryItem("INCOME", income, Color(0xFF4ADE80), currencySymbol)
-                FinanceSummaryItem("EXPENSES", expenses, Color(0xFF22D3EE), currencySymbol)
+                FinanceSummaryItem("INCOME", income, Color(0xFF4ADE80), currencySymbol, hideBalance)
+                FinanceSummaryItem("EXPENSES", expenses, Color(0xFF22D3EE), currencySymbol, hideBalance)
             }
         }
     }
@@ -233,7 +231,8 @@ fun FinanceSummaryItem(
     label: String,
     amount: Double,
     color: Color,
-    currencySymbol: String
+    currencySymbol: String,
+    hideBalance: Boolean = false // NEW: Parameter
 ) {
     Column {
         Text(
@@ -243,7 +242,7 @@ fun FinanceSummaryItem(
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "${if (label == "INCOME") "+" else ""}$currencySymbol${String.format(Locale.US, "%,.2f", amount)}",
+            text = if (hideBalance) "****" else "${if (label == "INCOME") "+" else ""}$currencySymbol${String.format(Locale.US, "%,.2f", amount)}",
             color = color,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp

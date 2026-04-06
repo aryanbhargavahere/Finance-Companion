@@ -15,3 +15,10 @@ data class Transaction(
     val subtitle: String,
     val isIncome: Boolean
 )
+
+// table to store the monthly saving goal
+@Entity(tableName = "user_preferences")
+data class UserPreferences(
+    @PrimaryKey val id: Int = 1,
+    val monthlyGoal: Double = 0.0
+)

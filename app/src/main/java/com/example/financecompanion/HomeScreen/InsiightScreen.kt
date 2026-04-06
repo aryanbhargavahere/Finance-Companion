@@ -103,8 +103,8 @@ fun SpendingPieChartCard(state: VaultState) {
     val totalSpending = categoryTotals.values.sum()
 
     val chartColors = listOf(
-        Color(0xFF00796B), Color(0xFF00BFA5), Color(0xFF26A69A),
-        Color(0xFF4DB6AC), Color(0xFF80CBC4), Color(0xFFB2DFDB)
+        Color(0xFF4F1575), Color(0xFFC4052B), Color(0xFF1A37A9),
+        Color(0xFFCCB80D), Color(0xFF3AC0B4), Color(0xFFE8F1F0)
     )
 
     Card(
@@ -136,7 +136,7 @@ fun SpendingPieChartCard(state: VaultState) {
                                 startAngle = startAngle,
                                 sweepAngle = sweepAngle,
                                 useCenter = false,
-                                style = Stroke(width = 35f, cap = StrokeCap.Butt)
+                                style = Stroke(width = 75f, cap = StrokeCap.Butt)
                             )
                             startAngle += sweepAngle
                         }
