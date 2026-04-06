@@ -111,14 +111,14 @@ Here is a simple breakdown of the app's core operations:
 
 | 🏠 Home Screen | 📜 Transaction History | 📈 Financial Analysis |
 | :---: | :---: | :---: |
-| <img width="1076" height="2155" alt="image" src="https://github.com/user-attachments/assets/bc61e81d-f707-481f-8e0e-05db8ac09895" />|
-| <img width="1080" height="2154" alt="image" src="https://github.com/user-attachments/assets/d243962c-58f1-4cea-8004-c01fbc4f778f" />|
-| <img width="1080" height="2159" alt="image" src="https://github.com/user-attachments/assets/efc2844d-5914-490d-b5b7-5d2fa5ac6249" />|
+| <img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/bc61e81d-f707-481f-8e0e-05db8ac09895" />|
+| <img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/d243962c-58f1-4cea-8004-c01fbc4f778f" />|
+| <img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/efc2844d-5914-490d-b5b7-5d2fa5ac6249" />|
 
 | 📊 Insights Category | ⚙️ Profile & Settings |
 | :---: | :---: |
-|<img width="1080" height="2125" alt="image" src="https://github.com/user-attachments/assets/2e5bd656-505c-4eda-bbf2-55bd3accb2e8" />|
-| <img width="1080" height="2144" alt="image" src="https://github.com/user-attachments/assets/0a5526d3-b2a6-46d7-9be3-f4712d24cda4" />|
+|<img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/2e5bd656-505c-4eda-bbf2-55bd3accb2e8" />|
+| <img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/0a5526d3-b2a6-46d7-9be3-f4712d24cda4" />|
 
 ---
 ## Author
