@@ -1,6 +1,5 @@
 package com.example.financecompanion.ProfileInScreens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,7 +19,7 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SecurityPrivacyScreen(
+fun FinanceCompanionSecurityPrivacyScreen(
     hideBalance: Boolean,
     onHideBalanceChange: (Boolean) -> Unit,
     lockTimer: Int,
@@ -33,7 +32,9 @@ fun SecurityPrivacyScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Security & Privacy", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text("Security & Privacy", fontWeight = FontWeight.Bold)
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -50,14 +51,14 @@ fun SecurityPrivacyScreen(
         ) {
             item {
                 Text(
-                    "PROTECTION",
+                    text = "PROTECTION",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Gray,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
             }
 
-            // --- Hide Balance Toggle ---
+            // Hide Balance Toggle (When Activated The Balance Will Be Converted To Asterisks)
             item {
                 SecurityToggleItem(
                     title = "Hide Balances",
@@ -68,15 +69,14 @@ fun SecurityPrivacyScreen(
                 )
             }
 
-            // --- Auto Lock Timer ---
+            // Auto Lock Timer
             item {
                 SecurityClickableItem(
                     title = "Auto-Lock Timer",
-                    subtitle = "Lock app after ${if(lockTimer == 0) "Immediate" else "$lockTimer seconds"}",
+                    subtitle = "Lock app after ${if (lockTimer == 0) "Immediate" else "$lockTimer seconds"}",
                     icon = Icons.Default.LockClock,
-                    onClick = { /* In a full app, show a Dropdown/Dialog here to pick time */
-                        // For now, let's cycle through: 0, 30, 60
-                        val next = when(lockTimer) {
+                    onClick = {
+                        val next = when (lockTimer) {
                             0 -> 30
                             30 -> 60
                             else -> 0
@@ -89,16 +89,18 @@ fun SecurityPrivacyScreen(
             item {
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
-                    "RESET DATA",
+                    text = "RESET DATA",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.Black.copy(alpha = 0.7f)
                 )
             }
 
-            // Reset the data
+            // Reset the data (IF allowed all the user data will be removed)
             item {
                 Surface(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
                     color = Color.Red.SimpleAlpha(0.05f),
                     shape = RoundedCornerShape(16.dp),
                     onClick = { showResetDialog = true }
@@ -107,10 +109,22 @@ fun SecurityPrivacyScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.DeleteForever, contentDescription = null, tint = Color.Red)
+                        Icon(
+                            imageVector = Icons.Default.DeleteForever,
+                            contentDescription = null,
+                            tint = Color.Red
+                        )
                         Column(modifier = Modifier.padding(start = 16.dp)) {
-                            Text("Reset Data", fontWeight = FontWeight.Bold, color = Color.Red)
-                            Text("Permanently delete all transactions", fontSize = 12.sp, color = Color.Gray)
+                            Text(
+                                text = "Reset Data",
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Red
+                            )
+                            Text(
+                                text = "Permanently delete all transactions",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
                         }
                     }
                 }
@@ -126,24 +140,42 @@ fun SecurityPrivacyScreen(
                     TextButton(onClick = {
                         onResetData()
                         showResetDialog = false
-                    }) { Text("Confirm Reset", color = Color.Red) }
+                    }) {
+                        Text("Confirm Reset", color = Color.Red)
+                    }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showResetDialog = false }) { Text("Cancel") }
+                    TextButton(onClick = { showResetDialog = false }) {
+                        Text("Cancel")
+                    }
                 }
             )
         }
     }
 }
 
-// Helper Color Function
 private fun Color.SimpleAlpha(alpha: Float): Color = this.copy(alpha = alpha)
 
 @Composable
-fun SecurityToggleItem(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+fun SecurityToggleItem(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
-        Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp)
+        ) {
             Text(title, fontWeight = FontWeight.Bold)
             Text(subtitle, fontSize = 12.sp, color = Color.Gray)
         }
@@ -152,11 +184,28 @@ fun SecurityToggleItem(title: String, subtitle: String, icon: androidx.compose.u
 }
 
 @Composable
-fun SecurityClickableItem(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    Surface(onClick = onClick, color = Color.Transparent) {
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+fun SecurityClickableItem(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
-            Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp)
+            ) {
                 Text(title, fontWeight = FontWeight.Bold)
                 Text(subtitle, fontSize = 12.sp, color = Color.Gray)
             }

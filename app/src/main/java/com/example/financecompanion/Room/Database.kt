@@ -7,7 +7,6 @@ import androidx.room.RoomDatabase
 import com.example.financecompanion.dataModel.model.Transaction
 import com.example.financecompanion.dataModel.model.UserPreferences
 
-// UPDATED: Added UserPreferences::class to the entities list
 @Database(entities = [Transaction::class, UserPreferences::class], version = 3)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
@@ -23,9 +22,6 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "finance_db"
                 )
-                    /* Since we added a new table, this will wipe the old 'version 3'
-                       database and recreate it with both tables.
-                    */
                     .fallbackToDestructiveMigration()
                     .build()
 

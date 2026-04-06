@@ -7,72 +7,73 @@ import com.example.financecompanion.Room.AppDatabase
 import com.example.financecompanion.currency.Currencycalculate
 import com.example.financecompanion.dataModel.model.Transaction
 import com.example.financecompanion.dataModel.model.UserPreferences
-import com.example.financecompanion.dataModel.model.VaultState
+import com.example.financecompanion.dataModel.model.ViewModelState
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class VaultProcessor(context: Context) : ViewModel() {
+class FinanceCompanionViewModel(context: Context) : ViewModel() {
 
     private val dao = AppDatabase.getDatabase(context).transactionDao()
     private val _selectedCurrency = MutableStateFlow("USD")
     val selectedCurrency = _selectedCurrency.asStateFlow()
 
-    val uiState: StateFlow<VaultState> = dao.getAll()
+    val uiState: StateFlow<ViewModelState> = dao.getAll()
         .map { list ->
 
             val currentRate = Currencycalculate.rates[selectedCurrency.value] ?: 1.0
 
-            // Calculate Income
+            // Calculate's Income
             val income = list.filter { it.isIncome }.sumOf { it.amount * currentRate}
 
-            // Calculate Savings
+            // Calculate's Savings
             val savings = list.filter { it.category == "Savings" }.sumOf { it.amount * currentRate  }
 
-            // Calculate Expenses
+            // Calculate's Expenses
             val expenses = list.filter { !it.isIncome && it.category != "Savings" }.sumOf { it.amount }
 
-            // Map totals by category for graphs
+            // Map totals by category
             val totalsByCategory = list.filter { !it.isIncome && it.category != "Savings" }
                 .groupBy { it.category }
                 .mapValues { entry -> entry.value.sumOf { it.amount } }
 
-
-
-            VaultState(
+            ViewModelState(
                 recentEntries = list,
                 totalIncome = income,
                 totalExpenses = expenses,
-                totalSavings = savings, // Ensure your VaultState data class has this field
+                totalSavings = savings,
                 balance = income - (expenses + savings),
                 categoryTotals = totalsByCategory
             )
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = VaultState()
+            initialValue = ViewModelState()
         )
 
+    // To Add a Transaction
     fun addTransaction(t: Transaction) {
         viewModelScope.launch {
             dao.insert(t)
         }
     }
 
+    // To Delete a Transaction
     fun deleteTransaction(transaction: Transaction) {
         viewModelScope.launch {
             dao.delete(transaction)
         }
     }
 
+    // To Edit a transaction
     fun updateTransaction(transaction: Transaction) {
         viewModelScope.launch {
             dao.update(transaction)
         }
     }
 
-    // Collect the goal directly from the database Flow
+    // User Can Enter There Monthly Saving Goal Will always be fetched from database once stored or updated
     val monthlyGoal: StateFlow<Double> = dao.getMonthlyGoal()
-        .map { it ?: 0.0 } // Default to 0.0 if null
+        .map { it ?: 0.0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
     fun updateMonthlyGoal(newGoal: Double) {
@@ -81,6 +82,7 @@ class VaultProcessor(context: Context) : ViewModel() {
         }
     }
 
+    // To add Money To Savings
     fun performTransfer(amount: Double, goalName: String) {
         val transferTx = Transaction(
             title = goalName,

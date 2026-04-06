@@ -15,9 +15,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+// The Screen Tells About The Language, Users Name and Country
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PersonalInfoScreen(
+fun FinanceCompanionPersonalInfoScreen(
     userName: String,
     userCountry: String,
     userLanguage: String,
@@ -45,21 +46,21 @@ fun PersonalInfoScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            InfoField(
+            InformationField(
                 label = "Full Name",
                 value = userName,
                 onValueChange = onNameChange,
                 icon = Icons.Default.Person
             )
 
-            InfoField(
+            InformationField(
                 label = "Country",
                 value = userCountry,
                 onValueChange = onCountryChange,
                 icon = Icons.Default.Public
             )
 
-            InfoField(
+            InformationField(
                 label = "Language",
                 value = userLanguage,
                 onValueChange = onLanguageChange,
@@ -80,7 +81,7 @@ fun PersonalInfoScreen(
 }
 
 @Composable
-fun InfoField(
+fun InformationField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,

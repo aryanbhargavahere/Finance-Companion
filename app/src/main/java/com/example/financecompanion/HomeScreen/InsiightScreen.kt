@@ -21,12 +21,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.financecompanion.dataModel.model.VaultState
+import com.example.financecompanion.dataModel.model.ViewModelState
 import java.util.Locale
 
 @Composable
-fun InsightsScreen(
-    state: VaultState,
+fun FinanceCompanionInsightsScreen(
+    state: ViewModelState,
     currencySymbol: String
 ) {
     LazyColumn(
@@ -46,16 +46,14 @@ fun InsightsScreen(
             )
         }
 
-        // 1. Visual Pie Chart Card (Breakdown by Category)
-        item { SpendingPieChartCard(state) }
+        // Shows Pie Chart
+        item { SpendingPieChart(state) }
 
-        // 2. Expense Ratio Card
+        // Expense Ratio
         item { SpendingChartCard(state, currencySymbol) }
 
-        // 3. Net Balance / Trend Card
         item { WeeklyTrendCard(state, currencySymbol) }
 
-        // 4. Category Breakdown List
         val categories = state.recentEntries
             .filter { !it.isIncome && it.category != "Savings" }
             .groupBy { it.category }
@@ -72,7 +70,7 @@ fun InsightsScreen(
                 )
             }
             items(categories.toList()) { (category, list) ->
-                CategoryInsightRow(
+                CategoryInsight(
                     category = category,
                     categoryAmount = list.sumOf { it.amount },
                     totalExpenses = state.totalExpenses,
@@ -93,8 +91,7 @@ fun InsightsScreen(
 }
 
 @Composable
-fun SpendingPieChartCard(state: VaultState) {
-    // Filter and group data
+fun SpendingPieChart(state: ViewModelState) {
     val categoryTotals = state.recentEntries
         .filter { !it.isIncome && it.category != "Savings" }
         .groupBy { it.category }
@@ -152,8 +149,6 @@ fun SpendingPieChartCard(state: VaultState) {
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Legend
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
@@ -174,7 +169,7 @@ fun SpendingPieChartCard(state: VaultState) {
 }
 
 @Composable
-fun SpendingChartCard(state: VaultState, currencySymbol: String) {
+fun SpendingChartCard(state: ViewModelState, currencySymbol: String) {
     val expenseColor = Color(0xFF00796B)
     val onSurface = MaterialTheme.colorScheme.onSurface
 
@@ -234,7 +229,7 @@ fun SpendingChartCard(state: VaultState, currencySymbol: String) {
 }
 
 @Composable
-fun WeeklyTrendCard(state: VaultState, currencySymbol: String) {
+fun WeeklyTrendCard(state: ViewModelState, currencySymbol: String) {
     val balance = state.totalIncome - (state.totalExpenses + state.totalSavings)
     val positiveColor = Color(0xFF00796B)
     val negativeColor = Color(0xFFD32F2F)
@@ -286,7 +281,7 @@ fun WeeklyTrendCard(state: VaultState, currencySymbol: String) {
 }
 
 @Composable
-fun CategoryInsightRow(category: String, categoryAmount: Double, totalExpenses: Double, currencySymbol: String) {
+fun CategoryInsight(category: String, categoryAmount: Double, totalExpenses: Double, currencySymbol: String) {
     val percentage = if (totalExpenses > 0) (categoryAmount / totalExpenses).toFloat() else 0f
 
     Surface(

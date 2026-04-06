@@ -15,15 +15,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.example.financecompanion.dataModel.model.Transaction
-import com.example.financecompanion.dataModel.model.VaultState
+import com.example.financecompanion.dataModel.model.ViewModelState
 import java.util.Locale
 
 @Composable
-fun HomeDashboard(
-    state: VaultState,
+fun FinanceCompanionHomeScreen(
+    state: ViewModelState,
     monthlyGoal: Double,
     currencySymbol: String = "$",
-    hideBalance: Boolean = false, // NEW: Parameter to control visibility
+    hideBalance: Boolean = false,
     onAddTransactionClicked: () -> Unit,
     onTransferClicked: () -> Unit,
     onInsightsClicked: () -> Unit,
@@ -40,7 +40,7 @@ fun HomeDashboard(
                 income = state.totalIncome,
                 expenses = state.totalExpenses,
                 currencySymbol = currencySymbol,
-                hideBalance = hideBalance // Pass state down
+                hideBalance = hideBalance
             )
         }
 
@@ -97,6 +97,7 @@ fun HomeDashboard(
     }
 }
 
+// Has Add, Move To Savings and Insights Button
 @Composable
 fun QuickActionRow(
     onAddClick: () -> Unit,
@@ -115,6 +116,7 @@ fun QuickActionRow(
     }
 }
 
+// Lets user setup monthly savings
 @Composable
 fun SavingsGoalCard(
     current: Double,
@@ -187,7 +189,7 @@ fun WealthCard(
     income: Double,
     expenses: Double,
     currencySymbol: String = "$",
-    hideBalance: Boolean = false // NEW: Parameter
+    hideBalance: Boolean = false
 ) {
     Card(
         modifier = Modifier

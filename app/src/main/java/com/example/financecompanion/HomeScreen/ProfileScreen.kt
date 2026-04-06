@@ -16,11 +16,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.financecompanion.dataModel.model.VaultState
+import com.example.financecompanion.dataModel.model.ViewModelState
 
 @Composable
-fun ProfileScreen(
-    state: VaultState,
+fun FinanceCompanionProfileScreen(
+    state: ViewModelState,
     onNavigateToAppearance: () -> Unit,
     onNavigateToCurrency: () -> Unit,
     onNavigateToPersonal: () -> Unit,
@@ -32,20 +32,18 @@ fun ProfileScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            // UPDATED: Used background from theme instead of hardcoded F8FAFC
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item { Spacer(modifier = Modifier.height(32.dp)) }
 
-        // 1. HEADER: USER AVATAR & NAME
+        // Show users avatar(person icon for now) and users name
         item {
             Box(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
-                    // UPDATED: SurfaceVariant gives a nice subtle grey in dark mode
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
@@ -53,46 +51,43 @@ fun ProfileScreen(
                     Icons.Default.Person,
                     contentDescription = null,
                     modifier = Modifier.size(60.dp),
-                    // UPDATED: Tint now reacts to the surface color
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = userName, // Dynamically use the passed userName
+                text = userName,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Black,
-                // UPDATED: Text color now switches between Black and White automatically
                 color = MaterialTheme.colorScheme.onBackground
             )
         }
 
         item { Spacer(modifier = Modifier.height(32.dp)) }
 
-        // 2. SETTINGS CATEGORIES
+        // Different setting items
         item {
             ProfileSectionHeader("ACCOUNT SETTINGS")
-            ProfileOptionItem("Personal Information", Icons.Default.Badge, onClick = { onNavigateToPersonal() })
-            ProfileOptionItem("Security & Privacy", Icons.Default.Shield, onClick = {onNavigateToSecurity()})
+            ProfileScreenOptions("Personal Information", Icons.Default.Badge, onClick = { onNavigateToPersonal() })
+            ProfileScreenOptions("Security & Privacy", Icons.Default.Shield, onClick = {onNavigateToSecurity()})
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
 
         item {
             ProfileSectionHeader("PREFERENCES")
-            ProfileOptionItem("Notifications", Icons.Default.NotificationsNone, onClick = { onNavigateToNotifications() })
-            ProfileOptionItem("Currency", Icons.Default.AttachMoney, onClick = { onNavigateToCurrency() })
-            ProfileOptionItem("Appearance", Icons.Default.Palette, onClick = { onNavigateToAppearance() })
+            ProfileScreenOptions("Notifications", Icons.Default.NotificationsNone, onClick = { onNavigateToNotifications() })
+            ProfileScreenOptions("Currency", Icons.Default.AttachMoney, onClick = { onNavigateToCurrency() })
+            ProfileScreenOptions("Appearance", Icons.Default.Palette, onClick = { onNavigateToAppearance() })
         }
 
         item { Spacer(modifier = Modifier.height(32.dp)) }
 
-        // 3. LOGOUT BUTTON
+        // Logout Button to go out of the appp
         item {
             Button(
                 onClick = onLogoutClick,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                // UPDATED: Using error container colors for a "Danger" look that works in dark mode
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer
@@ -116,28 +111,25 @@ fun ProfileSectionHeader(title: String) {
             fontWeight = FontWeight.Black,
             letterSpacing = 1.sp
         ),
-        // UPDATED: onSurface with alpha ensures it stays readable on dark backgrounds
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     )
 }
 
 @Composable
-fun ProfileOptionItem(title: String, icon: ImageVector, onClick: () -> Unit) {
+fun ProfileScreenOptions(title: String, icon: ImageVector, onClick: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
-        // UPDATED: Used 'surface' instead of hardcoded Color.White
         color = MaterialTheme.colorScheme.surface,
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        shadowElevation = 2.dp // Slightly increased for better visibility in dark mode
+        shadowElevation = 2.dp
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // UPDATED: Icons now use primary or onSurface color
             Icon(
                 icon,
                 contentDescription = null,

@@ -16,13 +16,13 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotificationScreen(onBack: () -> Unit) {
+fun FinanceCompanionNotificationScreen(onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // --- Custom Top Bar with Back Navigation ---
+        // Top Bar
         CenterAlignedTopAppBar(
             title = {
                 Text(
@@ -40,13 +40,11 @@ fun NotificationScreen(onBack: () -> Unit) {
             )
         )
 
-        // --- Empty State Content ---
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Faded bell icon to signal no activity
             Icon(
                 imageVector = Icons.Default.NotificationsNone,
                 contentDescription = null,

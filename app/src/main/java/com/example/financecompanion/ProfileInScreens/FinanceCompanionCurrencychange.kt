@@ -25,9 +25,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+/** The Currency will be asked at the starting but this is added if the user wants to see
+ * other currencies to however this wont change the current amount in users balance only will change the symbol**/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Currencychange(
+fun FinanceCompanionCurrencychange(
     currentCurrency: String,
     onCurrencyChange: (String) -> Unit,
     onBack: () -> Unit

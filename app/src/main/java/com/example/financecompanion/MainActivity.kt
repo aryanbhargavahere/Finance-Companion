@@ -31,25 +31,23 @@ import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
 import com.example.financecompanion.Authentication.BiometricAuth
 import com.example.financecompanion.HomeScreen.*
-import com.example.financecompanion.ProfileInScreens.AppearanceChangeScreen
-import com.example.financecompanion.ProfileInScreens.Currencychange
-import com.example.financecompanion.ProfileInScreens.NotificationScreen
-import com.example.financecompanion.ProfileInScreens.PersonalInfoScreen
-import com.example.financecompanion.ProfileInScreens.SecurityPrivacyScreen
+import com.example.financecompanion.ProfileInScreens.FinanceCompanionAppearanceChangeScreen
+import com.example.financecompanion.ProfileInScreens.FinanceCompanionCurrencychange
+import com.example.financecompanion.ProfileInScreens.FinanceCompanionNotificationScreen
+import com.example.financecompanion.ProfileInScreens.FinanceCompanionPersonalInfoScreen
+import com.example.financecompanion.ProfileInScreens.FinanceCompanionSecurityPrivacyScreen
 import com.example.financecompanion.dataModel.model.Transaction
 import com.example.financecompanion.ui.theme.FinanceCompanionTheme
-import com.example.financecompanion.viewmodels.VaultProcessor
+import com.example.financecompanion.viewmodels.FinanceCompanionViewModel
 
-/**
- * Main Navigation Enum to handle screen switching across the app
- */
+// Enum Class To Handle The Complete Navigation across the app
 enum class Screen {
     HOME, ACTIVITY, INSIGHT, PROFILE, APPEARANCE, CURRENCY, PERSONAL_INFO, NOTIFICATION, SECURITY
 }
 
 class MainActivity : FragmentActivity() {
 
-    // Keys for SharedPreferences (Used for lightweight user settings)
+    // Keys for SharedPreferences
     private val PREFS_NAME = "finance_prefs"
     private val KEY_USER_NAME = "user_name"
     private val KEY_USER_CURRENCY = "user_currency"
@@ -70,17 +68,16 @@ class MainActivity : FragmentActivity() {
             }
 
             // ViewModel setup - handles database logic for transactions and the savings goal
-            val processor = remember { VaultProcessor(context) }
+            val processor = remember { FinanceCompanionViewModel(context) }
             val state by processor.uiState.collectAsState()
             val monthlyGoal by processor.monthlyGoal.collectAsState() // Persistent Room data
 
             val sharedPrefs = remember { getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
 
-            // --- NAVIGATION STACK STATE ---
+            // For BackStacking
             val navigationStack = remember { mutableStateListOf(Screen.HOME) }
             val currentScreen = navigationStack.last()
 
-            // Navigation Helpers
             val navigateTo: (Screen) -> Unit = { screen ->
                 if (navigationStack.last() != screen) {
                     navigationStack.add(screen)
@@ -98,7 +95,6 @@ class MainActivity : FragmentActivity() {
                 navigateBack()
             }
 
-            // --- UI & Lifecycle State ---
             var isAuthenticated by remember { mutableStateOf(false) }
             var isDarkMode by remember { mutableStateOf(false) }
 
@@ -108,23 +104,23 @@ class MainActivity : FragmentActivity() {
             var userCountry by remember { mutableStateOf("India") }
             var userLanguage by remember { mutableStateOf("English") }
 
-            // Security States
+            // Security States using sharedprefs available in profile screen
             var hideBalance by remember { mutableStateOf(sharedPrefs.getBoolean(KEY_HIDE_BALANCE, false)) }
             var lockTimer by remember { mutableStateOf(sharedPrefs.getInt(KEY_LOCK_TIMER, 0)) }
 
             // Control states for BottomSheets and Dialogs
-            var showNameOnboarding by remember { mutableStateOf(false) }
-            var showCurrencyOnboarding by remember { mutableStateOf(false) }
-            var showAddSheet by remember { mutableStateOf(false) }
+            var showName by remember { mutableStateOf(false) }
+            var showCurrency by remember { mutableStateOf(false) }
+            var showAddOption by remember { mutableStateOf(false) }
             var showTransferDialog by remember { mutableStateOf(false) }
             var showGoalDialog by remember { mutableStateOf(false) }
 
-            // Full Reset Logic
+            // Full Reset Logic (Removes Users Complete Data)
             val performFullReset: () -> Unit = {
                 this@MainActivity.finishAffinity()
             }
 
-            // Dynamic currency symbol helper
+            // For Currency Symbols
             val currencySymbol = remember(userCurrency) {
                 when (userCurrency) {
                     "EUR" -> "€"
@@ -135,10 +131,9 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            // Trigger onboarding if the name is missing after login
             LaunchedEffect(isAuthenticated) {
                 if (isAuthenticated && userName.isEmpty()) {
-                    showNameOnboarding = true
+                    showName = true
                 }
             }
 
@@ -182,16 +177,16 @@ class MainActivity : FragmentActivity() {
                     ) { padding ->
                         Box(modifier = Modifier.padding(padding)) {
                             when (currentScreen) {
-                                Screen.HOME -> HomeDashboard(
+                                Screen.HOME -> FinanceCompanionHomeScreen(
                                     state, monthlyGoal, currencySymbol,hideBalance,
-                                    onAddTransactionClicked = { showAddSheet = true },
+                                    onAddTransactionClicked = { showAddOption = true },
                                     onTransferClicked = { showTransferDialog = true },
                                     onInsightsClicked = { navigateTo(Screen.INSIGHT) },
                                     onEditGoalClicked = { showGoalDialog = true }
                                 )
-                                Screen.INSIGHT -> InsightsScreen(state, currencySymbol)
-                                Screen.ACTIVITY -> TransactionScreen(state, processor, currencySymbol)
-                                Screen.PROFILE -> ProfileScreen(
+                                Screen.INSIGHT -> FinanceCompanionInsightsScreen(state, currencySymbol)
+                                Screen.ACTIVITY -> FinanceCompanionTransactionScreen(state, processor, currencySymbol)
+                                Screen.PROFILE -> FinanceCompanionProfileScreen(
                                     state = state,
                                     userName = userName,
                                     onNavigateToAppearance = { navigateTo(Screen.APPEARANCE) },
@@ -201,12 +196,12 @@ class MainActivity : FragmentActivity() {
                                     onNavigateToSecurity = { navigateTo(Screen.SECURITY) },
                                     onLogoutClick = { performLogout() }
                                 )
-                                Screen.APPEARANCE -> AppearanceChangeScreen(
+                                Screen.APPEARANCE -> FinanceCompanionAppearanceChangeScreen(
                                     isDarkMode,
                                     { isDarkMode = it },
                                     { navigateBack() }
                                 )
-                                Screen.CURRENCY -> Currencychange(
+                                Screen.CURRENCY -> FinanceCompanionCurrencychange(
                                     userCurrency,
                                     { newCurr ->
                                         userCurrency = newCurr
@@ -214,7 +209,7 @@ class MainActivity : FragmentActivity() {
                                     },
                                     { navigateBack() }
                                 )
-                                Screen.PERSONAL_INFO -> PersonalInfoScreen(
+                                Screen.PERSONAL_INFO -> FinanceCompanionPersonalInfoScreen(
                                     userName, userCountry, userLanguage,
                                     { newName ->
                                         userName = newName
@@ -223,8 +218,8 @@ class MainActivity : FragmentActivity() {
                                     { userCountry = it }, { userLanguage = it },
                                     { navigateBack() }
                                 )
-                                Screen.NOTIFICATION -> NotificationScreen(onBack = { navigateBack() })
-                                Screen.SECURITY -> SecurityPrivacyScreen(
+                                Screen.NOTIFICATION -> FinanceCompanionNotificationScreen(onBack = { navigateBack() })
+                                Screen.SECURITY -> FinanceCompanionSecurityPrivacyScreen(
                                     hideBalance = hideBalance,
                                     onHideBalanceChange = {
                                         hideBalance = it
@@ -240,36 +235,34 @@ class MainActivity : FragmentActivity() {
                                 )
                             }
 
-                            // --- Overlay Components ---
-
-                            if (showNameOnboarding) {
-                                OnboardingNameDialog { name ->
+                            if (showName) {
+                                AskNameDialog { name ->
                                     userName = name
                                     sharedPrefs.edit { putString(KEY_USER_NAME, name) }
-                                    showNameOnboarding = false
-                                    showCurrencyOnboarding = true
+                                    showName = false
+                                    showCurrency = true
                                 }
                             }
 
-                            if (showCurrencyOnboarding) {
-                                OnboardingCurrencyDialog { curr ->
+                            if (showCurrency) {
+                                CurrencyAskDialog { curr ->
                                     userCurrency = curr
                                     sharedPrefs.edit { putString(KEY_USER_CURRENCY, curr) }
-                                    showCurrencyOnboarding = false
+                                    showCurrency = false
                                 }
                             }
 
-                            if (showAddSheet) {
-                                ModalBottomSheet(onDismissRequest = { showAddSheet = false }) {
-                                    AddTransaction(
-                                        onSave = { processor.addTransaction(it); showAddSheet = false },
-                                        onDismiss = { showAddSheet = false }
+                            if (showAddOption) {
+                                ModalBottomSheet(onDismissRequest = { showAddOption = false }) {
+                                    AddNewTransaction(
+                                        onSave = { processor.addTransaction(it); showAddOption = false },
+                                        onDismiss = { showAddOption = false }
                                     )
                                 }
                             }
 
                             if (showTransferDialog) {
-                                TransferDialog(
+                                AmountTransferDialog(
                                     onConfirm = { amt ->
                                         processor.performTransfer(amt, "Savings")
                                         showTransferDialog = false
@@ -300,7 +293,7 @@ class MainActivity : FragmentActivity() {
     }
 }
 
-// --- UI Components & Dialogs ---
+// UI Components
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -334,8 +327,9 @@ fun FinanceCompanionTopBar(onProfileClick: () -> Unit, onNotificationClick: () -
     )
 }
 
+//The Dialog Asks Name When User Enters For Th First Time
 @Composable
-fun OnboardingNameDialog(onConfirm: (String) -> Unit) {
+fun AskNameDialog(onConfirm: (String) -> Unit) {
     var text by remember { mutableStateOf("") }
     Dialog(onDismissRequest = {}) {
         Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface) {
@@ -364,8 +358,9 @@ fun OnboardingNameDialog(onConfirm: (String) -> Unit) {
     }
 }
 
+//The Dialog Asks Users Native Currency When User Logins
 @Composable
-fun OnboardingCurrencyDialog(onConfirm: (String) -> Unit) {
+fun CurrencyAskDialog(onConfirm: (String) -> Unit) {
     val currencies = listOf("USD", "EUR", "GBP", "INR", "JPY")
     Dialog(onDismissRequest = {}) {
         Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface) {
@@ -436,7 +431,7 @@ fun SetSavingsGoalDialog(currentGoal: Double, onDismiss: () -> Unit, onConfirm: 
 }
 
 @Composable
-fun TransferDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
+fun AmountTransferDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
     var amount by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -465,7 +460,7 @@ fun TransferDialog(onConfirm: (Double) -> Unit, onDismiss: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddTransaction(onSave: (Transaction) -> Unit, onDismiss: () -> Unit) {
+fun AddNewTransaction(onSave: (Transaction) -> Unit, onDismiss: () -> Unit) {
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var isIncome by remember { mutableStateOf(false) }

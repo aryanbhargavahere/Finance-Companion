@@ -1,6 +1,5 @@
 package com.example.financecompanion.dataModel.model
 
-import android.icu.util.Currency
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -16,7 +15,6 @@ data class Transaction(
     val isIncome: Boolean
 )
 
-// table to store the monthly saving goal
 @Entity(tableName = "user_preferences")
 data class UserPreferences(
     @PrimaryKey val id: Int = 1,

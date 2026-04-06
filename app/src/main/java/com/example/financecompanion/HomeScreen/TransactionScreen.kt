@@ -20,14 +20,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.financecompanion.dataModel.model.Transaction
-import com.example.financecompanion.dataModel.model.VaultState
-import com.example.financecompanion.viewmodels.VaultProcessor
+import com.example.financecompanion.dataModel.model.ViewModelState
+import com.example.financecompanion.viewmodels.FinanceCompanionViewModel
 
 @Composable
-fun TransactionScreen(
-    state: VaultState,
-    processor: VaultProcessor,
-    currencySymbol: String // ADDED: To track currency changes
+fun FinanceCompanionTransactionScreen(
+    state: ViewModelState,
+    viewModel: FinanceCompanionViewModel,
+    currencySymbol: String
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var transactionToEdit by remember { mutableStateOf<Transaction?>(null) }
@@ -40,7 +40,7 @@ fun TransactionScreen(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 1. SEARCH BAR
+        // Search Bar
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -63,7 +63,7 @@ fun TransactionScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 2. TRANSACTION LIST WITH DATE GROUPING
+        // Transaction List According to days
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
@@ -78,27 +78,27 @@ fun TransactionScreen(
                 !it.date.contains("Today", ignoreCase = true) && !it.date.contains("Yesterday", ignoreCase = true)
             }
 
-            // Section: TODAY
+            // Today
             if (todayEntries.isNotEmpty()) {
                 item { SectionHeader("TODAY") }
                 items(todayEntries) { entry ->
-                    TransactionItemWithMenu(entry, processor, currencySymbol, onEdit = { transactionToEdit = it })
+                    TransactionMenu(entry, viewModel, currencySymbol, onEdit = { transactionToEdit = it })
                 }
             }
 
-            // Section: YESTERDAY
+            // Yesterday
             if (yesterdayEntries.isNotEmpty()) {
                 item { SectionHeader("YESTERDAY") }
                 items(yesterdayEntries) { entry ->
-                    TransactionItemWithMenu(entry, processor, currencySymbol, onEdit = { transactionToEdit = it })
+                    TransactionMenu(entry, viewModel, currencySymbol, onEdit = { transactionToEdit = it })
                 }
             }
 
-            // Section: PREVIOUS
+            // Previous
             if (otherEntries.isNotEmpty()) {
                 item { SectionHeader("PREVIOUS") }
                 items(otherEntries) { entry ->
-                    TransactionItemWithMenu(entry, processor, currencySymbol, onEdit = { transactionToEdit = it })
+                    TransactionMenu(entry, viewModel, currencySymbol, onEdit = { transactionToEdit = it })
                 }
             }
 
@@ -113,13 +113,13 @@ fun TransactionScreen(
         }
     }
 
-    // 3. EDIT DIALOG
+    // Edit transaction
     transactionToEdit?.let { tx ->
         EditTransactionDialog(
             transaction = tx,
             onDismiss = { transactionToEdit = null },
             onConfirm = { updatedTx ->
-                processor.updateTransaction(updatedTx)
+                viewModel.updateTransaction(updatedTx)
                 transactionToEdit = null
             }
         )
@@ -142,9 +142,9 @@ fun SectionHeader(text: String) {
 }
 
 @Composable
-fun TransactionItemWithMenu(
+fun TransactionMenu(
     entry: Transaction,
-    processor: VaultProcessor,
+    processor: FinanceCompanionViewModel,
     currencySymbol: String, // Pass symbol through
     onEdit: (Transaction) -> Unit
 ) {
@@ -157,8 +157,6 @@ fun TransactionItemWithMenu(
             color = Color.Transparent,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Updated: Assuming your TransactionRow accepts currencySymbol
-            // If it doesn't, you will need to update that Composable's parameters too
             TransactionRow(entry, currencySymbol)
         }
 

@@ -11,16 +11,4 @@ object Currencycalculate {
         "JPY" to 150.0
     )
 
-    val symbols = mapOf(
-        "USD" to "$",
-        "EUR" to "€",
-        "GBP" to "£",
-        "INR" to "₹",
-        "JPY" to "¥"
-    )
-
-    fun format(amount: Double, currencyCode: String): String {
-        val symbol = symbols[currencyCode] ?: "$"
-        return "$symbol${String.format(Locale.US, "%,.2f", amount)}"
-    }
 }
