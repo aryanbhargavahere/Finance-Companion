@@ -46,14 +46,16 @@ fun InsightsScreen(
             )
         }
 
-        // 1. Visual Pie Chart Card
+        // 1. Visual Pie Chart Card (Breakdown by Category)
+        item { SpendingPieChartCard(state) }
+
+        // 2. Expense Ratio Card
         item { SpendingChartCard(state, currencySymbol) }
 
-        // 2. Net Balance / Trend Card
+        // 3. Net Balance / Trend Card
         item { WeeklyTrendCard(state, currencySymbol) }
 
-        // 3. Category Breakdown
-        // Filter out income and savings to focus strictly on expenses
+        // 4. Category Breakdown List
         val categories = state.recentEntries
             .filter { !it.isIncome && it.category != "Savings" }
             .groupBy { it.category }
@@ -85,6 +87,87 @@ fun InsightsScreen(
                 ) {
                     Text("No expense data to analyze", color = Color.Gray)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun SpendingPieChartCard(state: VaultState) {
+    // Filter and group data
+    val categoryTotals = state.recentEntries
+        .filter { !it.isIncome && it.category != "Savings" }
+        .groupBy { it.category }
+        .mapValues { it.value.sumOf { entry -> entry.amount } }
+
+    val totalSpending = categoryTotals.values.sum()
+
+    val chartColors = listOf(
+        Color(0xFF00796B), Color(0xFF00BFA5), Color(0xFF26A69A),
+        Color(0xFF4DB6AC), Color(0xFF80CBC4), Color(0xFFB2DFDB)
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                "Spending Distribution",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.align(Alignment.Start)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (totalSpending > 0) {
+                Box(modifier = Modifier.size(160.dp), contentAlignment = Alignment.Center) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        var startAngle = -90f
+                        categoryTotals.values.forEachIndexed { index, amount ->
+                            val sweepAngle = (amount.toFloat() / totalSpending.toFloat()) * 360f
+                            drawArc(
+                                color = chartColors[index % chartColors.size],
+                                startAngle = startAngle,
+                                sweepAngle = sweepAngle,
+                                useCenter = false,
+                                style = Stroke(width = 35f, cap = StrokeCap.Butt)
+                            )
+                            startAngle += sweepAngle
+                        }
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Total", fontSize = 12.sp, color = Color.Gray)
+                        Text(
+                            String.format(Locale.US, "%.0f", totalSpending),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 18.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Legend
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    categoryTotals.keys.take(3).forEachIndexed { index, category ->
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
+                            Box(modifier = Modifier.size(8.dp).background(chartColors[index % chartColors.size], CircleShape))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(category, fontSize = 11.sp, color = Color.Gray)
+                        }
+                    }
+                }
+            } else {
+                Text("Not enough data", color = Color.Gray, modifier = Modifier.padding(20.dp))
             }
         }
     }

@@ -22,10 +22,9 @@ import androidx.compose.ui.unit.sp
 import com.example.financecompanion.dataModel.model.Transaction
 import com.example.financecompanion.dataModel.model.VaultState
 import com.example.financecompanion.viewmodels.VaultProcessor
-import java.util.Locale
 
 @Composable
-fun ActivityScreen(
+fun TransactionScreen(
     state: VaultState,
     processor: VaultProcessor,
     currencySymbol: String // ADDED: To track currency changes

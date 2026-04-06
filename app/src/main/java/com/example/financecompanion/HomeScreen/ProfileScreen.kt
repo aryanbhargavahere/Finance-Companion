@@ -26,6 +26,7 @@ fun ProfileScreen(
     onNavigateToAppearance: () -> Unit,
     onNavigateToCurrency: () -> Unit,
     onNavigateToPersonal: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     userName: String
 ) {
     LazyColumn(
@@ -76,7 +77,7 @@ fun ProfileScreen(
 
         item {
             ProfileSectionHeader("PREFERENCES")
-            ProfileOptionItem("Notifications", Icons.Default.NotificationsNone, onClick = {})
+            ProfileOptionItem("Notifications", Icons.Default.NotificationsNone, onClick = {onNavigateToNotifications()})
             ProfileOptionItem("Currency", Icons.Default.AttachMoney, onClick = {onNavigateToCurrency()})
             ProfileOptionItem("Appearance", Icons.Default.Palette, onClick = {onNavigateToAppearance()})
         }
