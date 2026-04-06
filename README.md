@@ -7,14 +7,15 @@ A professional, minimalist, and privacy-first **Money Management** application b
 ## 📑 Table of Contents
 1. ✨ [Features](#-features)
 2. 🛠️ [Tech Stack](#-tech-stack)
-3. 📂 [Project Structure](#-project-structure)
-4. 🌐 [API Used](#-api-used)
-5. 🚀 [Getting Started](#-getting-started)
+3. 🏗️ [Architecture](#-architecture)
+4. 🛡️ [Security And Privacy](#-security-and-privacy)
+5. 📂 [Project Structure](#-project-structure)
+6. 🚀 [Getting Started](#-getting-started)
     - 📋 [Prerequisites](#prerequisites)
     - ▶️ [Steps to Run](#steps-to-run)
-6. 🧠 [How the App Works](#-how-the-app-works)
-7. 🔮 [Future Enhancements](#-future-enhancements)
-8. 👤 [Author](#author)
+7. 🧠 [How the App Works](#-how-the-app-works)
+8. 📲 [Screenshots](#-screenshots)
+9. 👤 [Author](#author)
 
 ---
 
@@ -55,25 +56,25 @@ The app follows the **MVVM (Model-View-ViewModel)** design pattern:
 ## 📂 Project Structure
 
 ```bash
-app/
- └── src/main/java/com/example/weatherchecker/
-     ├── MainActivity.kt              # Main UI and logic
-     ├── WeatherServiceapi.kt         # Retrofit API interface
-     ├── utild/
-     │   └── Constants.kt             # API constants & network check
-     ├── model/
-     │   ├── WeatherResponse.kt
-     │   ├── Weather.kt
-     │   ├── Wind.kt
-     │   ├── Clouds.kt
-     │   ├── Coord.kt
-     │   └── Sys.kt
- └── src/main/res/
-     ├── layout/
-     │   └── activity_main.xml
-     ├── drawable/
-     │   └── bg_info_card.xml
-     └── values/
+com.example.financecompanion
+├──  Authentication          
+├──  currency                 
+├──  dataModel.model       
+├──  HomeScreen               
+│   ├── Homescreen.kt          
+│   ├── InsightScreen.kt        
+│   ├── ProfileScreen.kt        
+│   └── TransactionScreen.kt    
+├──  ProfileInScreens        
+│   ├── AppearanceChange.kt     
+│   ├── FinanceCompanionCurrencychange.kt
+│   ├── FinanceCompanionNotificationScreen.kt
+│   ├── PersonalInfo.kt        
+│   └── SecurityandPrivacy.kt   
+├──  Room                     
+├──  ui.theme               
+├──  viewmodels             
+└──  MainActivity.kt         
 ```
 ---
 
@@ -82,31 +83,40 @@ app/
 ### Prerequisites
 - **Android Studio** (latest version recommended)
 - **Android SDK 24** or above
-- **Internet connection**
+- **A device with Biometric capabilities**
 
 ### Steps to Run
 1. Download or clone the repository
 2. Open the project in **Android Studio**
-3. Add your **Weather API key**
-4. Sync **Gradle**
-5. Run the app on an **emulator** or **physical device**
+3. Click the Run button to install on your emulator or physical device.
 
 ---
 ## 🧠 How the App Works
+Here is a simple breakdown of the app's core operations:
 
-1. User enters a **city name** or uses **location services**
-2. App sends a request to the **weather API**
-3. API responds with **JSON data**
-4. Data is **parsed** and displayed on the **UI**
+1. **Secure Entry & Authentication** :
+   - **Biometric Authentication**: Uses the Android BiometricPrompt API to verify your identity (fingerprint) before granting access to the app.
+2. **UI Layer**:
+   - **Live Updates**: Built with **Jetpack Compose** so the UI observe's your data. When you add a transaction, the balance updates instantly.
+   - **Privacy Masking**:The HomeScreen checks your hide balance setting in real-time. If enabled, it replaces sensitive numbers with (****) before they open the screen.
+3. **Local Database**:
+   - **Room Database**: All financial records are stored in a local SQLite database.
+4. **Data Flow**:
+   - You enter a new expense or income.
+   - The ViewModel calculates the new totals and updates the internal state.
+   - The UI reacts to the data change and shows the new entry in your "Recent Activity" list.
 
 ---
-## 🔮 Future Enhancements
+## 📲 Screenshots
 
-- 📅 **7-day weather forecast**
-- 🌙 **Dark mode**
-- 📍 **Auto-detect current location**
-- 🌬️ **Wind speed & pressure details**
-- 🗺️ **Map-based weather view**
+| 🏠 Home Screen | 📜 Transaction History | 📈 Financial Analysis |
+| :---: | :---: | :---: |
+| <img src="screenshots/homescreen.jpeg" width="200"> | <img src="screenshots/Transaction.jpeg" width="200"> | <img src="screenshots/Insights1.jpeg" width="200"> |
+
+| 📊 Insights Screen | ⚙️ Profile & Settings |
+| :---: | :---: |
+| <img src="screenshots/insights2.jpeg" width="200"> | <img src="screenshots/Profile.jpeg" width="200"> |
+
 ---
 ## Author
 - **Name:** Aryan
