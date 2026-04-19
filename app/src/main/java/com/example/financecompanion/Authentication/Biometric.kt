@@ -24,10 +24,6 @@ object BiometricAuth {
                     super.onAuthenticationError(errorCode, errString)
                     onResult(false)
                 }
-
-                override fun onAuthenticationFailed() {
-                    super.onAuthenticationFailed()
-                }
             })
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
