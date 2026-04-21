@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financecompanion.Room.AppDatabase
-import com.example.financecompanion.currency.Currencycalculate
+import com.example.financecompanion.currency.Currencycalculator
 import com.example.financecompanion.dataModel.model.Transaction
 import com.example.financecompanion.dataModel.model.UserPreferences
 import com.example.financecompanion.dataModel.model.ViewModelState
@@ -20,7 +20,7 @@ class FinanceCompanionViewModel(context: Context) : ViewModel() {
     val uiState: StateFlow<ViewModelState> = dao.getAll()
         .map { list ->
 
-            val currentRate = Currencycalculate.rates[selectedCurrency.value] ?: 1.0
+            val currentRate = Currencycalculator.rates[selectedCurrency.value] ?: 1.0
 
             // Calculate's Income
             val income = list.filter { it.isIncome }.sumOf { it.amount * currentRate}

@@ -1,8 +1,7 @@
 package com.example.financecompanion.currency
 
-import java.util.Locale
 
-object Currencycalculate {
+object Currencycalculator {
     val rates = mapOf(
         "USD" to 1.0,
         "EUR" to 0.92,
